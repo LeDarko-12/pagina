@@ -5,8 +5,8 @@
 
 const CONFIG = {
   // ─── BRANDING ──────────────────────────────────────────
-  siteName:    'SakuraStream',
-  siteTagline: 'Tu universo anime, un click de distancia',
+  siteName:    'Anime',
+  siteTagline: 'Pagina de anime :)',
   siteUrl:     'https://tu-usuario.github.io/sakura-stream',
 
   // ─── JIKAN API (MyAnimeList) ────────────────────────────
