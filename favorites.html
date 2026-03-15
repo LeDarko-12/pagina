@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Favoritos — SakuraStream</title>
+  <meta name="description" content="Tus animes favoritos e historial de reproducción">
+  <meta name="theme-color" content="#7c3aed">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+<button class="back-to-top" id="backToTop">↑</button>
+
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🌸</div>
+    <span class="nav-logo-text">SakuraStream</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"     class="nav-link">Inicio</a>
+    <a href="search.html"    class="nav-link">Explorar</a>
+    <a href="favorites.html" class="nav-link active">Favoritos</a>
+  </div>
+  <div class="nav-search">
+    <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Buscar anime...">
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+  <button class="nav-mobile-toggle"><span></span><span></span><span></span></button>
+</nav>
+
+<main class="page-wrapper">
+  <div class="container">
+
+    <!-- Tabs -->
+    <div style="padding:2rem 0 0">
+      <h1 style="font-family:var(--font-display);font-size:2rem;font-weight:800;margin-bottom:1.5rem">
+        <span style="background:var(--grad-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Mi Colección</span>
+      </h1>
+
+      <div style="display:flex;gap:0.5rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem;margin-bottom:1.5rem">
+        <button class="btn btn-sm" id="tabFavBtn" style="background:var(--accent-violet);color:white" onclick="switchFavTab('favorites')">
+          ♥ Favoritos (<span id="favCount">0</span>)
+        </button>
+        <button class="btn btn-sm btn-ghost" id="tabHistBtn" onclick="switchFavTab('history')">
+          🕐 Historial (<span id="histCount">0</span>)
+        </button>
+        <button class="btn btn-sm btn-ghost" id="tabContinueBtn" onclick="switchFavTab('continue')">
+          ▶ Continuar viendo (<span id="continueCount">0</span>)
+        </button>
+      </div>
+
+      <!-- Favorites Panel -->
+      <div id="panelFavorites">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem" id="favActions">
+          <button class="btn btn-ghost btn-sm" onclick="clearFavorites()">🗑 Limpiar favoritos</button>
+        </div>
+        <div class="anime-grid" id="favoritesGrid"></div>
+      </div>
+
+      <!-- History Panel -->
+      <div id="panelHistory" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <button class="btn btn-ghost btn-sm" onclick="clearHistory()">🗑 Limpiar historial</button>
+        </div>
+        <div class="episodes-grid" id="historyGrid"></div>
+      </div>
+
+      <!-- Continue Watching Panel -->
+      <div id="panelContinue" style="display:none">
+        <div class="continue-grid" id="continueWatchingGrid"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="footer" style="margin-top:3rem">
+  <div class="footer-bottom" style="max-width:var(--content-max);margin:0 auto">
+    <span>© 2025 SakuraStream</span>
+    <span>Datos por <a href="https://jikan.moe" target="_blank" style="color:var(--accent-light)">Jikan/MyAnimeList</a></span>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/favorites.js"></script>
+<script src="js/ui.js"></script>
+
+<script>
+UI.initNavbar();
+UI.initBackToTop();
+UI.initNavSearch();
+
+const favs     = Favorites.getFavorites();
+const history  = Favorites.getHistory();
+const continueList = Favorites.getContinueWatching();
+
+document.getElementById('favCount').textContent     = favs.length;
+document.getElementById('histCount').textContent    = history.length;
+document.getElementById('continueCount').textContent = continueList.length;
+
+// ── Favorites Grid ────────────────────────────────────────
+function renderFavorites() {
+  const grid = document.getElementById('favoritesGrid');
+  const favs = Favorites.getFavorites();
+  if (!favs.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">♡</div>
+        <h3>Sin favoritos todavía</h3>
+        <p style="color:var(--text-muted);margin-top:0.5rem">Agrega anime a favoritos desde su página de detalle</p>
+        <a href="search.html" class="btn btn-primary" style="margin-top:1rem">Explorar anime</a>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = favs.map(a => `
+    <div class="anime-card" onclick="window.location.href='anime.html?id=${a.mal_id}'">
+      <div class="anime-card-thumb">
+        <img loading="lazy" src="${a.image}" alt="${escapeHtml(a.title)}" onerror="this.src='assets/placeholder.jpg'">
+        <div class="anime-card-overlay"><div class="anime-card-play"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div>
+        ${a.score ? `<div class="anime-card-score">★${a.score?.toFixed(1)}</div>` : ''}
+        <button class="anime-card-fav active" onclick="event.stopPropagation();removeFav(${a.mal_id})">♥</button>
+      </div>
+      <div class="anime-card-body">
+        <div class="anime-card-title">${escapeHtml(a.title)}</div>
+        <div class="anime-card-meta">${a.episodes ? `<span class="anime-card-eps">${a.episodes} eps</span>` : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeFav(malId) {
+  Favorites.removeFavorite(malId);
+  renderFavorites();
+  document.getElementById('favCount').textContent = Favorites.getFavorites().length;
+  UI.toast('Eliminado de favoritos', 'info');
+}
+
+function clearFavorites() {
+  if (!confirm('¿Limpiar todos los favoritos?')) return;
+  Favorites.getFavorites().forEach(a => Favorites.removeFavorite(a.mal_id));
+  renderFavorites();
+  document.getElementById('favCount').textContent = 0;
+}
+
+// ── History Grid ──────────────────────────────────────────
+function renderHistory() {
+  const grid = document.getElementById('historyGrid');
+  const hist = Favorites.getHistory();
+  if (!hist.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">🕐</div>
+        <h3>Sin historial</h3>
+        <p style="color:var(--text-muted);margin-top:0.5rem">Los episodios que veas aparecerán aquí</p>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = hist.map(h => `
+    <div class="ep-card" onclick="window.location.href='episode.html?anime=${h.mal_id}&ep=${h.ep}&slug=${encodeURIComponent(h.slug||'')}&title=${encodeURIComponent(h.title)}'">
+      <img class="ep-thumb" src="${h.image}" loading="lazy" onerror="this.src='assets/placeholder.jpg'">
+      <div style="flex:1;min-width:0">
+        <div class="ep-num">${escapeHtml(h.title)}</div>
+        <div class="ep-title">Episodio ${h.ep}${h.epTitle ? ` — ${escapeHtml(h.epTitle)}` : ''}</div>
+        <div class="ep-desc">${new Date(h.watchedAt).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <div>
+        <span class="badge badge-violet">▶ Continuar</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  if (!confirm('¿Limpiar todo el historial?')) return;
+  Favorites.clearHistory();
+  renderHistory();
+  document.getElementById('histCount').textContent = 0;
+}
+
+// ── Continue Watching ─────────────────────────────────────
+function renderContinue() {
+  UI.renderContinueWatching('continueWatchingGrid');
+  const grid = document.getElementById('continueWatchingGrid');
+  if (!grid.children.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">▶</div>
+        <h3>Nada en progreso</h3>
+        <p style="color:var(--text-muted);margin-top:0.5rem">Empieza a ver anime para continuar desde aquí</p>
+        <a href="index.html" class="btn btn-primary" style="margin-top:1rem">Ir al inicio</a>
+      </div>`;
+  }
+}
+
+// ── Tab Switch ────────────────────────────────────────────
+function switchFavTab(tab) {
+  const panels = { favorites: 'panelFavorites', history: 'panelHistory', continue: 'panelContinue' };
+  const btns   = { favorites: 'tabFavBtn', history: 'tabHistBtn', continue: 'tabContinueBtn' };
+  Object.entries(panels).forEach(([k,v]) => {
+    document.getElementById(v).style.display = k === tab ? '' : 'none';
+  });
+  Object.entries(btns).forEach(([k,v]) => {
+    const btn = document.getElementById(v);
+    btn.style.background = k === tab ? 'var(--accent-violet)' : '';
+    btn.style.color = k === tab ? 'white' : '';
+    btn.className = `btn btn-sm ${k === tab ? '' : 'btn-ghost'}`;
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────
+renderFavorites();
+
+// Check if ?history hash
+if (location.hash === '#history') switchFavTab('history');
+
+// Handle tab visibility
+document.getElementById('tabFavBtn').addEventListener('click', () => {
+  document.getElementById('favoritesGrid').innerHTML = '';
+  renderFavorites();
+});
+
+document.getElementById('tabHistBtn').addEventListener('click', () => {
+  renderHistory();
+});
+
+document.getElementById('tabContinueBtn').addEventListener('click', () => {
+  renderContinue();
+});
+</script>
+
+</body>
+</html>

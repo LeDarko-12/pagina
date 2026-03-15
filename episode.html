@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reproduciendo — SakuraStream</title>
+  <meta name="description" content="Reproduciendo episodio de anime">
+  <meta name="theme-color" content="#7c3aed">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader">
+  <div class="page-loader-inner">
+    <div class="page-loader-logo">🌸 SakuraStream</div>
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ─── NAVBAR ─────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🌸</div>
+    <span class="nav-logo-text">SakuraStream</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"   class="nav-link">Inicio</a>
+    <a href="search.html"  class="nav-link">Explorar</a>
+    <a href="favorites.html" class="nav-link">Favoritos</a>
+  </div>
+  <div class="nav-search">
+    <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Buscar anime...">
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+  <button class="nav-mobile-toggle"><span></span><span></span><span></span></button>
+</nav>
+
+<main class="page-wrapper">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <div style="display:flex;align-items:center;gap:0.5rem;padding:1rem 0;font-size:0.875rem;color:var(--text-muted)">
+      <a href="index.html" style="color:var(--text-muted);transition:color .15s" onmouseover="this.style.color='var(--accent-light)'" onmouseout="this.style.color='var(--text-muted)'">Inicio</a>
+      <span>›</span>
+      <a id="breadcrumbAnime" href="#" style="color:var(--text-muted);transition:color .15s" onmouseover="this.style.color='var(--accent-light)'" onmouseout="this.style.color='var(--text-muted)'">Anime</a>
+      <span>›</span>
+      <span id="breadcrumbEp" style="color:var(--text-secondary)">Episodio</span>
+    </div>
+
+    <!-- Player Layout -->
+    <div class="player-layout">
+
+      <!-- ── LEFT: Player + Controls ─────────────────── -->
+      <div class="player-main">
+
+        <!-- Player Wrapper -->
+        <div class="player-wrapper" id="playerWrapper">
+          <div class="player-placeholder" id="playerPlaceholder">
+            <div class="player-placeholder-icon">▶</div>
+            <p style="color:var(--text-secondary);text-align:center;max-width:320px;font-size:0.9rem">
+              Selecciona un servidor para comenzar a reproducir
+            </p>
+            <div id="streamingLinks" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:1rem"></div>
+          </div>
+        </div>
+
+        <!-- Server & Lang Controls -->
+        <div style="margin-top:1.25rem">
+          <!-- Row 1: Server selector + Lang toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem">
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+              <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Servidor:</span>
+              <div class="server-selector" id="serverSelector">
+                <!-- Rendered by player.js -->
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:0.75rem">
+              <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="sub" onclick="Player.switchLang('sub')">SUB</button>
+                <button class="lang-btn" data-lang="dub" onclick="Player.switchLang('dub')">DUB</button>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="Player.toggleFullscreen()" title="Pantalla completa (F)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                Pantalla completa
+              </button>
+            </div>
+          </div>
+
+          <!-- Row 2: Episode navigation -->
+          <div class="player-controls-bar">
+            <div class="ep-nav-buttons">
+              <button class="btn btn-ghost btn-sm" id="prevEpBtn" onclick="Player.prevEpisode()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                Episodio anterior
+              </button>
+              <button class="btn btn-primary btn-sm" id="nextEpBtn" onclick="Player.nextEpisode()">
+                Siguiente episodio
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn btn-ghost btn-sm" id="favEpBtn" onclick="handleFav()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                Favoritos
+              </button>
+              <a id="animePageBtn" href="#" class="btn btn-ghost btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Info del anime
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Episode Info -->
+        <div class="player-info">
+          <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+            <img id="animePosterSmall" src="" alt="" style="width:60px;height:85px;border-radius:var(--radius-sm);object-fit:cover;background:var(--bg-surface)">
+            <div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.25rem" id="animeSubtitle">Cargando...</div>
+              <div class="player-ep-title" id="currentEpTitle">Episodio</div>
+              <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.4rem" id="epDescription"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap" id="streamingBtns">
+            <span style="font-size:0.8rem;color:var(--text-muted)">Ver también en:</span>
+          </div>
+        </div>
+
+        <!-- Keyboard shortcuts help -->
+        <div style="margin-top:0.75rem;padding:0.75rem;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <div style="font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap">
+            <span><kbd style="background:var(--bg-surface);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem">→</kbd> Siguiente episodio</span>
+            <span><kbd style="background:var(--bg-surface);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem">←</kbd> Episodio anterior</span>
+            <span><kbd style="background:var(--bg-surface);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem">F</kbd> Pantalla completa</span>
+          </div>
+        </div>
+
+      </div><!-- /player-main -->
+
+      <!-- ── RIGHT: Episodes Sidebar ─────────────────── -->
+      <div class="player-sidebar" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+        <div class="sidebar-header">
+          <span>Lista de episodios</span>
+          <span id="totalEpsLabel" class="text-xs text-muted"></span>
+        </div>
+        <div class="sidebar-ep-list" id="episodeSidebar">
+          <!-- Skeleton -->
+          ${Array.from({length:8}, (_,i)=>`
+            <div class="sidebar-ep-item" style="pointer-events:none">
+              <div class="skeleton sidebar-ep-num" style="width:20px;height:12px;border-radius:4px"></div>
+              <div style="flex:1">
+                <div class="skeleton" style="height:12px;border-radius:4px;width:80%"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+    </div><!-- /player-layout -->
+  </div>
+</main>
+
+<footer class="footer" style="margin-top:2rem">
+  <div class="footer-bottom" style="max-width:var(--content-max);margin:0 auto">
+    <span>© 2025 SakuraStream</span>
+    <span>Datos por <a href="https://jikan.moe" target="_blank" style="color:var(--accent-light)">Jikan/MyAnimeList</a></span>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/favorites.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/player.js"></script>
+
+<script>
+const params = new URLSearchParams(location.search);
+const animeId   = parseInt(params.get('anime'));
+const startEp   = parseInt(params.get('ep')) || 1;
+const animeSlug = decodeURIComponent(params.get('slug') || '');
+const animeTitle = decodeURIComponent(params.get('title') || 'Anime');
+
+if (!animeId) window.location.href = 'index.html';
+
+(async function initEpisodePage() {
+  UI.initNavbar();
+  UI.initNavSearch();
+
+  // Update breadcrumbs
+  document.getElementById('breadcrumbAnime').textContent = animeTitle;
+  document.getElementById('breadcrumbAnime').href = `anime.html?id=${animeId}`;
+  document.getElementById('breadcrumbEp').textContent = `Episodio ${startEp}`;
+  document.title = `Ep ${startEp} — ${animeTitle} — SakuraStream`;
+
+  // Update info
+  document.getElementById('animeSubtitle').textContent = animeTitle;
+  document.getElementById('animePageBtn').href = `anime.html?id=${animeId}`;
+
+  // Favorites button
+  const isFav = Favorites.isFavorite(animeId);
+  const favBtn = document.getElementById('favEpBtn');
+  if (isFav && favBtn) { favBtn.style.color = 'var(--accent-rose)'; }
+
+  try {
+    // Load anime data
+    const animeData = await API.getAnimeById(animeId);
+    const anime = animeData.data;
+
+    if (anime) {
+      const poster = API.getPoster(anime);
+      document.getElementById('animePosterSmall').src = poster;
+      document.getElementById('animePosterSmall').onerror = () => { document.getElementById('animePosterSmall').style.display='none'; };
+
+      // Init player
+      const allEps = await loadAllEpisodes(animeId);
+      const totalEps = anime.episodes || allEps.length;
+
+      document.getElementById('totalEpsLabel').textContent = `${totalEps} eps`;
+
+      Player.init({
+        animeId,
+        animeTitle: anime.title || animeTitle,
+        slug:       animeSlug || API.getEmbedSlug(anime),
+        currentEp:  startEp,
+        totalEps,
+        activeServer: 0,
+        activeLang:   'sub',
+        episodes:    allEps,
+      });
+
+      Player.renderEpisodeSidebar(allEps, 'episodeSidebar');
+
+      // Current ep title
+      const curEp = allEps.find(e => (e.mal_id || e.episode_id) === startEp);
+      if (curEp?.title) {
+        document.getElementById('currentEpTitle').textContent = `Ep ${startEp}: ${curEp.title}`;
+        document.getElementById('epDescription').textContent = curEp.synopsis || '';
+      } else {
+        document.getElementById('currentEpTitle').textContent = `Episodio ${startEp}`;
+      }
+
+      // Load streaming links
+      loadStreamingLinks(animeId);
+
+      // Update breadcrumb with ep title
+      if (curEp?.title) {
+        document.getElementById('breadcrumbEp').textContent = `Ep ${startEp}: ${curEp.title}`;
+      }
+
+      UI.setPageMeta(
+        `Ep ${startEp} — ${anime.title}`,
+        `Ver episodio ${startEp} de ${anime.title} en SakuraStream`,
+        poster
+      );
+    }
+
+  } catch (err) {
+    console.error('Episode page error:', err);
+    UI.toast('Error al cargar el episodio', 'error');
+  }
+
+  Player.initKeyboard?.();
+  UI.hideLoader();
+})();
+
+async function loadAllEpisodes(id) {
+  let allEps = [];
+  let page = 1;
+  let hasMore = true;
+  while (hasMore && page <= 5) {
+    try {
+      const data = await API.getAnimeEpisodes(id, page);
+      allEps = [...allEps, ...(data.data || [])];
+      hasMore = !!data.pagination?.has_next_page;
+      page++;
+    } catch { break; }
+  }
+  return allEps;
+}
+
+async function loadStreamingLinks(id) {
+  try {
+    const data = await API.getAnimeStreaming(id);
+    const links = data.data || [];
+    const container = document.getElementById('streamingBtns');
+    if (!container || !links.length) return;
+    container.innerHTML = `<span style="font-size:0.8rem;color:var(--text-muted)">Ver también en:</span>` +
+      links.slice(0, 4).map(l => `
+        <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+          ${l.name}
+        </a>
+      `).join('');
+  } catch {}
+}
+
+function handleFav() {
+  const anime = { mal_id: animeId, title: animeTitle };
+  const added = Favorites.toggleFavorite(anime);
+  const btn = document.getElementById('favEpBtn');
+  if (btn) {
+    btn.style.color = added ? 'var(--accent-rose)' : '';
+  }
+  UI.toast(added ? 'Añadido a favoritos ♥' : 'Eliminado de favoritos', added ? 'heart' : 'info');
+}
+</script>
+
+</body>
+</html>

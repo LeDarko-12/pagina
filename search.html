@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explorar Anime — SakuraStream</title>
+  <meta name="description" content="Explora el catálogo completo de anime. Busca por género, tipo, temporada y más.">
+  <meta name="theme-color" content="#7c3aed">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader">
+  <div class="page-loader-inner">
+    <div class="page-loader-logo">🌸 SakuraStream</div>
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<button class="back-to-top" id="backToTop">↑</button>
+
+<!-- ─── NAVBAR ─────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🌸</div>
+    <span class="nav-logo-text">SakuraStream</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"   class="nav-link">Inicio</a>
+    <a href="search.html"  class="nav-link active">Explorar</a>
+    <a href="search.html?status=airing" class="nav-link">En emisión</a>
+    <a href="search.html?type=movie"  class="nav-link">Películas</a>
+    <a href="favorites.html" class="nav-link">Favoritos</a>
+  </div>
+  <div class="nav-search">
+    <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Buscar anime...">
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+  <div class="nav-actions">
+    <a href="favorites.html" class="nav-btn nav-btn-ghost">♥ Favoritos</a>
+  </div>
+  <button class="nav-mobile-toggle"><span></span><span></span><span></span></button>
+</nav>
+
+<main class="page-wrapper">
+
+  <!-- Search Hero -->
+  <div class="search-hero">
+    <h1 class="search-title">Explorar Anime</h1>
+    <p class="search-subtitle" id="searchSubtitle">Encuentra tu próximo anime favorito</p>
+
+    <div class="search-bar">
+      <span class="search-bar-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </span>
+      <input
+        type="text"
+        class="search-bar-input"
+        id="searchPageInput"
+        placeholder="Buscar por título, género, estudio..."
+        autofocus
+      >
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="search-filters">
+
+    <!-- Genre Filter -->
+    <div class="filter-group">
+      <label class="filter-label">Género</label>
+      <div class="genre-scroll" id="genreFilters">
+        <!-- Rendered by search.js -->
+        <div class="skeleton" style="height:34px;width:60px;border-radius:999px"></div>
+        <div class="skeleton" style="height:34px;width:80px;border-radius:999px"></div>
+        <div class="skeleton" style="height:34px;width:70px;border-radius:999px"></div>
+        <div class="skeleton" style="height:34px;width:90px;border-radius:999px"></div>
+        <div class="skeleton" style="height:34px;width:75px;border-radius:999px"></div>
+        <div class="skeleton" style="height:34px;width:85px;border-radius:999px"></div>
+      </div>
+    </div>
+
+    <!-- Type Filter + Sort -->
+    <div style="display:flex;align-items:flex-start;gap:2rem;flex-wrap:wrap">
+      <div class="filter-group" style="flex:1">
+        <label class="filter-label">Tipo</label>
+        <div class="genre-scroll" id="typeFilters">
+          <!-- Rendered by search.js -->
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Ordenar por</label>
+        <select
+          id="sortSelect"
+          style="background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 1rem;border-radius:var(--radius-sm);font-size:0.85rem;outline:none;cursor:pointer"
+        >
+          <!-- Rendered by search.js -->
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Header -->
+  <div class="search-results-header">
+    <span class="results-count" id="resultsCount"></span>
+    <div id="searchSpinner" style="display:none">
+      <div class="spinner" style="width:24px;height:24px;border-width:2px;margin:0"></div>
+    </div>
+  </div>
+
+  <!-- Results Grid -->
+  <div class="search-results-grid">
+    <div class="anime-grid" id="searchResultsGrid">
+      <!-- Rendered by search.js -->
+    </div>
+
+    <!-- Infinite Scroll Sentinel -->
+    <div id="scrollSentinel" style="height:1px;margin:2rem 0"></div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-bottom" style="max-width:var(--content-max);margin:0 auto">
+    <span>© 2025 SakuraStream</span>
+    <span>Datos por <a href="https://jikan.moe" target="_blank" style="color:var(--accent-light)">Jikan/MyAnimeList</a></span>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/favorites.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/search.js"></script>
+
+<script>
+  UI.initNavbar();
+  UI.initBackToTop();
+  UI.initNavSearch();
+  UI.setActiveNav();
+  Search.init();
+  UI.hideLoader();
+</script>
+
+</body>
+</html>

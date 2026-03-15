@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SakuraStream — Tu universo anime</title>
+
+  <!-- SEO & Open Graph -->
+  <meta name="description" content="SakuraStream — La mejor plataforma de streaming de anime online. Mira los últimos episodios, trending y clásicos en alta calidad.">
+  <meta name="keywords" content="anime, streaming, ver anime online, SakuraStream">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SakuraStream — Tu universo anime">
+  <meta property="og:description" content="La mejor plataforma de streaming de anime online.">
+  <meta property="og:image" content="assets/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#7c3aed">
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Page Loader -->
+<div class="page-loader" id="pageLoader">
+  <div class="page-loader-inner">
+    <div class="page-loader-logo">🌸 SakuraStream</div>
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Back to Top -->
+<button class="back-to-top" id="backToTop" title="Volver arriba">↑</button>
+
+<!-- ─── NAVBAR ─────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🌸</div>
+    <span class="nav-logo-text">SakuraStream</span>
+  </a>
+
+  <div class="nav-links">
+    <a href="index.html"   class="nav-link active">Inicio</a>
+    <a href="search.html"  class="nav-link">Explorar</a>
+    <a href="search.html?filter=airing" class="nav-link">En emisión</a>
+    <a href="search.html?filter=movie"  class="nav-link">Películas</a>
+    <a href="favorites.html" class="nav-link">Favoritos</a>
+  </div>
+
+  <div class="nav-search">
+    <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Buscar anime...">
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+
+  <div class="nav-actions">
+    <a href="favorites.html" class="nav-btn nav-btn-ghost" title="Favoritos">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Favoritos
+    </a>
+  </div>
+
+  <button class="nav-mobile-toggle" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ─── MAIN CONTENT ──────────────────────────────────── -->
+<main class="page-wrapper">
+
+  <!-- Hero Slider -->
+  <section class="hero" id="hero">
+    <div class="hero-slides" id="heroSlides">
+      <!-- Rendered by JS -->
+      <div style="width:100%;height:100%;background:var(--bg-surface);display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+    <div class="hero-dots" id="heroDots"></div>
+  </section>
+
+  <div class="container">
+
+    <!-- Continue Watching -->
+    <section class="section" id="continueSection">
+      <div class="section-header">
+        <h2 class="section-title">Continuar viendo</h2>
+        <a href="#" onclick="UI.clearContinue()" class="section-link" style="color:var(--text-muted);font-size:0.8rem">Limpiar</a>
+      </div>
+      <div class="continue-grid" id="continueGrid">
+        <!-- Rendered by JS if history exists -->
+      </div>
+    </section>
+
+    <!-- Currently Airing -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">En emisión ahora</h2>
+        <a href="search.html?status=airing" class="section-link">Ver todo →</a>
+      </div>
+      <div class="carousel-wrapper">
+        <button class="carousel-btn carousel-btn-prev" id="airingPrev">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="carousel" id="airingCarousel">
+          <!-- Skeleton -->
+        </div>
+        <button class="carousel-btn carousel-btn-next" id="airingNext">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Genre Browser -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Explorar por género</h2>
+      </div>
+      <div class="genre-scroll" id="genreScroll"></div>
+    </section>
+
+    <!-- Trending / Popular -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Más populares</h2>
+        <a href="search.html?order=bypopularity" class="section-link">Ver todo →</a>
+      </div>
+      <div class="anime-grid" id="popularGrid">
+        <!-- Skeleton -->
+      </div>
+    </section>
+
+    <!-- Top Rated -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Mejor puntuados</h2>
+        <a href="search.html?order=score" class="section-link">Ver todo →</a>
+      </div>
+      <div class="carousel-wrapper">
+        <button class="carousel-btn carousel-btn-prev" id="topPrev">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="carousel" id="topRatedCarousel">
+          <!-- Skeleton -->
+        </div>
+        <button class="carousel-btn carousel-btn-next" id="topNext">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Current Season -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Temporada actual</h2>
+        <a href="search.html?filter=season" class="section-link">Ver todo →</a>
+      </div>
+      <div class="anime-grid" id="seasonGrid">
+        <!-- Skeleton -->
+      </div>
+    </section>
+
+  </div><!-- /container -->
+</main>
+
+<!-- ─── FOOTER ─────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="nav-logo" style="margin-bottom:1rem;display:inline-flex">
+        <div class="nav-logo-icon">🌸</div>
+        <span class="nav-logo-text">SakuraStream</span>
+      </a>
+      <p>Tu plataforma de streaming de anime favorita. Mira los últimos episodios, clásicos y más. Todo en un solo lugar.</p>
+    </div>
+    <div>
+      <div class="footer-heading">Explorar</div>
+      <div class="footer-links">
+        <a href="search.html" class="footer-link">Todos los anime</a>
+        <a href="search.html?status=airing" class="footer-link">En emisión</a>
+        <a href="search.html?type=movie" class="footer-link">Películas</a>
+        <a href="search.html?type=ova" class="footer-link">OVAs</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-heading">Mi cuenta</div>
+      <div class="footer-links">
+        <a href="favorites.html" class="footer-link">Favoritos</a>
+        <a href="favorites.html#history" class="footer-link">Historial</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-heading">Géneros</div>
+      <div class="footer-links">
+        <a href="search.html?genre=1&gname=Action" class="footer-link">Acción</a>
+        <a href="search.html?genre=4&gname=Comedy" class="footer-link">Comedia</a>
+        <a href="search.html?genre=22&gname=Romance" class="footer-link">Romance</a>
+        <a href="search.html?genre=10&gname=Fantasy" class="footer-link">Fantasía</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 SakuraStream — Hecho con ♥ para fans del anime</span>
+    <span>Los datos son proporcionados por <a href="https://jikan.moe" target="_blank" style="color:var(--accent-light)">Jikan API</a> (MyAnimeList)</span>
+  </div>
+</footer>
+
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/favorites.js"></script>
+<script src="js/ui.js"></script>
+
+<script>
+(async function initHome() {
+  // Init UI components
+  UI.initNavbar();
+  UI.initBackToTop();
+  UI.initNavSearch();
+  UI.setActiveNav();
+
+  // Show continue watching if history exists
+  UI.renderContinueWatching('continueGrid');
+  const continueSection = document.getElementById('continueSection');
+  if (continueSection && document.getElementById('continueGrid')?.children.length === 0) {
+    continueSection.style.display = 'none';
+  }
+
+  // Render genre scroll
+  const genreScroll = document.getElementById('genreScroll');
+  if (genreScroll) {
+    genreScroll.innerHTML = CONFIG.popularGenres.map(g => `
+      <a href="search.html?genre=${g.id}&gname=${encodeURIComponent(g.name)}" class="genre-pill">${g.name}</a>
+    `).join('');
+  }
+
+  // Skeleton loaders
+  UI.renderSkeletonCards(8, 'airingCarousel');
+  UI.renderSkeletonCards(12, 'popularGrid');
+  UI.renderSkeletonCards(8, 'topRatedCarousel');
+  UI.renderSkeletonCards(12, 'seasonGrid');
+
+  // Init carousel buttons
+  UI.initCarouselBtn('airingPrev', 'airingNext', 'airingCarousel');
+  UI.initCarouselBtn('topPrev', 'topNext', 'topRatedCarousel');
+
+  try {
+    // Load airing (hero + carousel)
+    const airingData = await API.getTopAiring();
+    const airing = airingData.data || [];
+
+    // Hero
+    UI.initHero(airing);
+
+    // Airing carousel
+    UI.renderCarousel(airing.slice(0, 20), 'airingCarousel');
+
+    // Load popular
+    const popularData = await API.getTopPopular();
+    UI.renderAnimeGrid(popularData.data?.slice(0, 12) || [], 'popularGrid');
+
+    // Load top rated (carousel)
+    const topData = await API.getTopRated();
+    UI.renderCarousel(topData.data?.slice(0, 20) || [], 'topRatedCarousel');
+
+    // Load current season
+    const seasonData = await API.getCurrentSeason();
+    UI.renderAnimeGrid(seasonData.data?.slice(0, 12) || [], 'seasonGrid');
+
+  } catch (err) {
+    console.error('Error loading homepage:', err);
+    UI.toast('Error al cargar el catálogo. Intenta de nuevo.', 'error');
+  }
+
+  UI.hideLoader();
+})();
+</script>
+
+</body>
+</html>
