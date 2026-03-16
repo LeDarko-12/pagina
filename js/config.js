@@ -5,20 +5,43 @@
 
 const CONFIG = {
   // ─── BRANDING ──────────────────────────────────────────
-  siteName:    'Anime',
-  siteTagline: 'Pagina de anime :)',
+  siteName:    'SakuraStream',
+  siteTagline: 'Tu universo anime, un click de distancia',
   siteUrl:     'https://tu-usuario.github.io/sakura-stream',
 
   // ─── JIKAN API (MyAnimeList) ────────────────────────────
-  // Documentación: https://docs.api.jikan.moe/
-  jikanBase: 'https://api.jikan.moe/v4',
-  jikanDelay: 400, // ms entre requests (límite: 3/s)
+  jikanBase:  'https://api.jikan.moe/v4',
+  jikanDelay: 400, // ms entre requests (límite: ~3/s)
+
+  // ─── TMDB API (The Movie Database) ──────────────────────
+  // Usada para: miniaturas de episodios + pósters alternativos
+  tmdbKey:       '8a2de0488825903a0a4b7d0ff12a3873',
+  tmdbBase:      'https://api.themoviedb.org/3',
+  tmdbImageBase: 'https://image.tmdb.org/t/p/',
+  tmdbEnabled:   true, // Pon en false para desactivar TMDB
+
+  // ─── ANIMEONLINE.NINJA ──────────────────────────────────
+  // Fuente de episodios en español
+  aonBase:    'https://ww3.animeonline.ninja',
+  aonEnabled: true,
+  // Proxy CORS para scraping del lado del cliente
+  // Si falla, prueba: 'https://api.allorigins.win/raw?url=' o 'https://corsproxy.io/?'
+  corsProxy:  'https://corsproxy.io/?',
 
   // ─── SERVIDORES DE EMBED ────────────────────────────────
-  // Añade o modifica servers de streaming aquí
   // {slug} = slug del anime (ej: "shingeki-no-kyojin")
   // {ep}   = número de episodio
   embedServers: [
+    // ── AnimeonlineNinja (auto-detectado vía scraper) ──
+    {
+      name: 'AON España',
+      lang: 'sub-es',
+      icon: '🌐',
+      // El slug real se resuelve con AnimeonlineAPI.getEmbedUrl()
+      // Esta URL es el fallback si el slug ya está configurado
+      url: (slug, ep) => `https://ww3.animeonline.ninja/episodio/${slug}-${ep}/`,
+    },
+    // ── Gogoanime / Anitaku ────────────────────────────
     {
       name: 'Gogo SUB',
       lang: 'sub',
@@ -31,6 +54,7 @@ const CONFIG = {
       icon: '🔵',
       url: (slug, ep) => `https://emb.anitaku.to/?id=${slug}-dub-episode-${ep}`,
     },
+    // ── Servidores alternativos ────────────────────────
     {
       name: 'StreamSB',
       lang: 'sub',
@@ -83,7 +107,9 @@ const CONFIG = {
   pageSize: 24,
 };
 
-// Helper: convierte título a slug para URLs de embed
+// ─── HELPERS ──────────────────────────────────────────────
+
+/** Convierte título a slug para URLs de embed */
 CONFIG.titleToSlug = (title) => {
   if (!title) return '';
   return title
@@ -94,9 +120,16 @@ CONFIG.titleToSlug = (title) => {
     .replace(/-+/g, '-');
 };
 
-// Helper: obtiene URL de embed para un servidor específico
+/** URL de embed para un servidor dado */
 CONFIG.getEmbedUrl = (serverIndex, slug, ep) => {
   const server = CONFIG.embedServers[serverIndex];
   if (!server) return null;
   return server.url(slug, ep);
+};
+
+/** URL de imagen TMDB */
+CONFIG.tmdbImage = (path, size = 'w500') => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  return `${CONFIG.tmdbImageBase}${size}${path}`;
 };
