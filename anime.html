@@ -54,11 +54,9 @@
     <div class="anime-hero-bg" id="animeBg" style="background-image:url('')"></div>
     <div class="anime-hero-gradient"></div>
     <div class="anime-hero-content">
-      <!-- Poster -->
       <div class="anime-poster" id="animePosterBox">
         <div class="skeleton" style="aspect-ratio:2/3;width:220px"></div>
       </div>
-      <!-- Info -->
       <div class="anime-info" id="animeInfo">
         <div class="skeleton skeleton-line" style="width:200px;height:14px;margin-bottom:12px"></div>
         <div class="skeleton skeleton-line" style="width:80%;height:36px;margin-bottom:8px"></div>
@@ -69,8 +67,8 @@
 
   <div class="container">
 
-    <!-- Tabs: Episodes / Characters / Recommendations -->
-    <div style="display:flex;gap:0.5rem;margin:1.5rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem">
+    <!-- Tabs -->
+    <div style="display:flex;gap:0.5rem;margin:1.5rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem;flex-wrap:wrap">
       <button class="btn btn-sm" id="tabEpisodes" style="background:var(--accent-violet);color:white" onclick="switchTab('episodes')">
         📺 Episodios
       </button>
@@ -85,8 +83,10 @@
     <!-- Episodes Panel -->
     <div id="panelEpisodes">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:1rem">
-        <div>
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
           <span id="epCount" class="text-secondary text-sm">Cargando episodios...</span>
+          <!-- Indicador de fuente -->
+          <span id="epSourceBadge" style="display:none"></span>
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
           <input
@@ -100,9 +100,21 @@
           <button class="btn btn-sm btn-ghost" id="epPageNext" onclick="loadEpisodePage('next')">Siguiente →</button>
         </div>
       </div>
-      <div class="episodes-grid ep-grid-2col" id="episodesGrid">
-        <!-- Rendered by JS -->
+
+      <!-- Opciones de fuente de episodios -->
+      <div id="epSourceOptions" style="display:none;margin-bottom:1rem;padding:0.75rem;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border)">
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Fuente de episodios</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="genre-pill active" id="srcMAL" onclick="setEpSource('mal')">MyAnimeList</button>
+          <button class="genre-pill" id="srcAON" onclick="setEpSource('aon')">
+            🌐 AnimeonlineNinja
+            <span id="aonLoadingDot" style="display:inline-block;width:6px;height:6px;background:var(--accent-amber);border-radius:50%;margin-left:4px;animation:spin 1s linear infinite"></span>
+          </button>
+        </div>
+        <div id="aonSlugInfo" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;display:none"></div>
       </div>
+
+      <div class="episodes-grid ep-grid-2col" id="episodesGrid"></div>
     </div>
 
     <!-- Characters Panel -->
@@ -121,23 +133,29 @@
 <footer class="footer">
   <div class="footer-bottom" style="max-width:var(--content-max);margin:0 auto">
     <span>© 2025 SakuraStream</span>
-    <span>Datos por <a href="https://jikan.moe" target="_blank" style="color:var(--accent-light)">Jikan/MyAnimeList</a></span>
+    <span>Datos por <a href="https://jikan.moe" target="_blank" style="color:var(--accent-light)">Jikan/MyAnimeList</a> · Imágenes por <a href="https://www.themoviedb.org" target="_blank" style="color:var(--accent-light)">TMDB</a></span>
   </div>
 </footer>
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
+<script src="js/tmdb.js"></script>
 <script src="js/favorites.js"></script>
 <script src="js/ui.js"></script>
 
 <script>
-let _anime = null;
-let _allEpisodes = [];
-let _epPage = 1;
-const EP_PER_PAGE = 100;
-let _animeSlug = '';
+let _anime        = null;
+let _allEpisodes  = [];  // episodios de MAL
+let _aonEpisodes  = [];  // episodios de AnimeonlineNinja
+let _aonSlug      = null;
+let _epPage       = 1;
+let _epSource     = 'mal'; // 'mal' | 'aon'
+let _tmdbThumbs   = {};   // { epNum: imageUrl } pre-cargados de TMDB
+let _animeSlug    = '';
 
-const params = new URLSearchParams(location.search);
+const EP_PER_PAGE = 100;
+
+const params  = new URLSearchParams(location.search);
 const animeId = parseInt(params.get('id'));
 
 (async function initAnimePage() {
@@ -149,28 +167,26 @@ const animeId = parseInt(params.get('id'));
   UI.renderSkeletonEpCards(8, 'episodesGrid');
 
   try {
-    // ── Load main anime data ─────────────────────────────
-    const data = await API.getAnimeById(animeId);
-    _anime = data.data;
+    // ── 1. Cargar datos del anime (MAL) ─────────────────────
+    const data   = await API.getAnimeById(animeId);
+    _anime       = data.data;
     if (!_anime) throw new Error('Anime not found');
 
-    _animeSlug = API.getEmbedSlug(_anime);
+    _animeSlug   = API.getEmbedSlug(_anime);
 
-    // ── Update meta ──────────────────────────────────────
     UI.setPageMeta(_anime.title, _anime.synopsis?.substring(0, 160) || '', API.getPoster(_anime));
 
-    // ── Hero Banner ──────────────────────────────────────
-    const bg = document.getElementById('animeBg');
-    bg.style.backgroundImage = `url('${API.getPoster(_anime)}')`;
+    // ── 2. Hero Banner ───────────────────────────────────────
+    document.getElementById('animeBg').style.backgroundImage = `url('${API.getPoster(_anime)}')`;
 
-    // ── Poster ───────────────────────────────────────────
     document.getElementById('animePosterBox').innerHTML = `
-      <img src="${API.getPoster(_anime)}" alt="${escapeHtml(_anime.title)}" loading="eager" onerror="this.src='assets/placeholder.jpg'">
+      <img src="${API.getPoster(_anime)}" alt="${escapeHtml(_anime.title)}" loading="eager"
+           onerror="UI._onPosterError(this, ${_anime.mal_id}, '${encodeURIComponent(_anime.title)}', '${encodeURIComponent(_anime.title_english || '')}')">
     `;
 
-    // ── Info ─────────────────────────────────────────────
-    const status  = API.getStatusBadge(_anime.status);
-    const isFav   = Favorites.isFavorite(_anime.mal_id);
+    // ── 3. Info panel ────────────────────────────────────────
+    const status      = API.getStatusBadge(_anime.status);
+    const isFav       = Favorites.isFavorite(_anime.mal_id);
     const lastWatched = Favorites.getLastWatched(_anime.mal_id);
 
     document.getElementById('animeInfo').innerHTML = `
@@ -193,67 +209,45 @@ const animeId = parseInt(params.get('id'));
       </div>
 
       <div class="anime-stats">
-        ${_anime.score ? `<div class="anime-stat"><div class="anime-stat-val">★ ${_anime.score.toFixed(1)}</div><div class="anime-stat-label">Score</div></div>` : ''}
+        ${_anime.score   ? `<div class="anime-stat"><div class="anime-stat-val" style="color:var(--accent-amber)">★ ${_anime.score.toFixed(1)}</div><div class="anime-stat-label">Score</div></div>` : ''}
         ${_anime.scored_by ? `<div class="anime-stat"><div class="anime-stat-val">${(_anime.scored_by/1000).toFixed(0)}K</div><div class="anime-stat-label">Votos</div></div>` : ''}
         ${_anime.members ? `<div class="anime-stat"><div class="anime-stat-val">${(_anime.members/1000).toFixed(0)}K</div><div class="anime-stat-label">Miembros</div></div>` : ''}
-        ${_anime.rank ? `<div class="anime-stat"><div class="anime-stat-val">#${_anime.rank}</div><div class="anime-stat-label">Rank</div></div>` : ''}
-        ${_anime.episodes ? `<div class="anime-stat"><div class="anime-stat-val">${_anime.episodes}</div><div class="anime-stat-label">Episodios</div></div>` : ''}
-        ${_anime.year ? `<div class="anime-stat"><div class="anime-stat-val">${_anime.year}</div><div class="anime-stat-label">Año</div></div>` : ''}
+        ${_anime.rank    ? `<div class="anime-stat"><div class="anime-stat-val" style="color:var(--accent-cyan)">#${_anime.rank}</div><div class="anime-stat-label">Rank</div></div>` : ''}
+        ${_anime.episodes? `<div class="anime-stat"><div class="anime-stat-val">${_anime.episodes}</div><div class="anime-stat-label">Episodios</div></div>` : ''}
       </div>
 
       ${_anime.synopsis ? `
-      <p class="anime-synopsis collapsed" id="synopsis">${escapeHtml(_anime.synopsis)}</p>
-      <button onclick="toggleSynopsis()" class="btn btn-ghost btn-sm" id="synopsisBtn" style="margin-top:0.5rem">
-        Leer más ↓
-      </button>` : ''}
+      <div>
+        <p class="anime-synopsis collapsed" id="synopsis">${escapeHtml(_anime.synopsis)}</p>
+        <button class="btn btn-ghost btn-sm" id="synopsisBtn" onclick="toggleSynopsis()" style="margin-top:0.5rem">Leer más ↓</button>
+      </div>` : ''}
 
       <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
-        <a
-          href="episode.html?anime=${_anime.mal_id}&ep=1&slug=${encodeURIComponent(_animeSlug)}&title=${encodeURIComponent(_anime.title)}"
-          class="btn btn-primary"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          ${lastWatched ? `Continuar Ep ${lastWatched.ep}` : 'Ver Episodio 1'}
-        </a>
-
-        <button
-          class="btn ${isFav ? 'btn-rose' : 'btn-ghost'}"
-          id="favBtn"
-          onclick="handleFav()"
-          style="${isFav ? 'background:rgba(251,113,133,0.2);border-color:var(--accent-rose);color:var(--accent-rose)' : ''}"
-        >
+        ${lastWatched
+          ? `<a href="episode.html?anime=${_anime.mal_id}&ep=${lastWatched.ep}&slug=${encodeURIComponent(_animeSlug)}&title=${encodeURIComponent(_anime.title)}" class="btn btn-primary">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+               Continuar Ep ${lastWatched.ep}
+             </a>`
+          : `<a href="episode.html?anime=${_anime.mal_id}&ep=1&slug=${encodeURIComponent(_animeSlug)}&title=${encodeURIComponent(_anime.title)}" class="btn btn-primary">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+               Ver Episodio 1
+             </a>`
+        }
+        <button class="btn btn-ghost" id="favBtn" onclick="handleFav()"
+          ${isFav ? 'style="background:rgba(251,113,133,0.2);border-color:var(--accent-rose);color:var(--accent-rose)"' : ''}>
           ${isFav ? '♥ En favoritos' : '♡ Agregar a favoritos'}
         </button>
-
-        <a
-          href="https://myanimelist.net/anime/${_anime.mal_id}"
-          target="_blank" rel="noopener"
-          class="btn btn-ghost"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
-          Ver en MAL
-        </a>
       </div>
 
-      ${_anime.studios?.length ? `
-      <div style="margin-top:1rem;font-size:0.875rem;color:var(--text-secondary)">
-        <strong style="color:var(--text-muted)">Estudio:</strong>
-        ${_anime.studios.map(s => `<span style="color:var(--accent-light)">${s.name}</span>`).join(', ')}
-      </div>` : ''}
-
-      ${_anime.aired?.string ? `
-      <div style="margin-top:0.4rem;font-size:0.875rem;color:var(--text-secondary)">
-        <strong style="color:var(--text-muted)">Emisión:</strong> ${_anime.aired.string}
-      </div>` : ''}
-
-      ${_anime.duration ? `
-      <div style="margin-top:0.4rem;font-size:0.875rem;color:var(--text-secondary)">
-        <strong style="color:var(--text-muted)">Duración:</strong> ${API.formatDuration(_anime.duration)}
-      </div>` : ''}
+      ${_anime.aired?.string ? `<div style="margin-top:1rem;font-size:0.875rem;color:var(--text-secondary)"><strong style="color:var(--text-muted)">Emisión:</strong> ${_anime.aired.string}</div>` : ''}
+      ${_anime.duration      ? `<div style="margin-top:0.4rem;font-size:0.875rem;color:var(--text-secondary)"><strong style="color:var(--text-muted)">Duración:</strong> ${API.formatDuration(_anime.duration)}</div>` : ''}
     `;
 
-    // ── Load Episodes ────────────────────────────────────
+    // ── 4. Cargar episodios MAL ───────────────────────────────
     await loadAllEpisodes();
+
+    // ── 5. Buscar en AON + TMDB en paralelo (background) ─────
+    _initBackgroundSources();
 
   } catch (err) {
     console.error(err);
@@ -270,29 +264,22 @@ const animeId = parseInt(params.get('id'));
   UI.hideLoader();
 })();
 
-// ── Load All Episodes (paginados) ──────────────────────────
+// ── Cargar episodios MAL (paginados) ──────────────────────
 async function loadAllEpisodes() {
   _allEpisodes = [];
-  let page = 1;
-  let hasMore = true;
+  let page = 1, hasMore = true;
 
-  // Cargar hasta 5 páginas (500 eps) para no exceder rate limit
   while (hasMore && page <= 5) {
     try {
       const data = await API.getAnimeEpisodes(animeId, page);
-      const eps = data.data || [];
-      _allEpisodes = [..._allEpisodes, ...eps];
+      _allEpisodes = [..._allEpisodes, ...(data.data || [])];
       hasMore = !!data.pagination?.has_next_page;
       page++;
-    } catch (e) {
-      console.warn('Episode page load error:', e);
-      break;
-    }
+    } catch { break; }
   }
 
   renderEpisodesPage(1);
 
-  // Setup search
   const epSearch = document.getElementById('epSearch');
   if (epSearch) {
     epSearch.addEventListener('input', () => {
@@ -302,18 +289,110 @@ async function loadAllEpisodes() {
   }
 }
 
+// ── Iniciar carga en background: AON + TMDB ───────────────
+async function _initBackgroundSources() {
+  if (!_anime) return;
+
+  // Mostrar panel de fuente
+  const sourcePanel = document.getElementById('epSourceOptions');
+  if (sourcePanel) sourcePanel.style.display = 'block';
+
+  // ── TMDB thumbnails (en background) ──────────────────────
+  if (CONFIG.tmdbEnabled) {
+    (async () => {
+      try {
+        _tmdbThumbs = await TMDB.batchEpisodeThumbnails(
+          _anime.title,
+          _anime.title_english || '',
+          _anime.year || null,
+          _allEpisodes.slice(0, EP_PER_PAGE) // Solo primera página para no saturar
+        );
+        // Actualizar miniaturas visibles
+        UI.updateEpisodeThumbnails(_tmdbThumbs, 'episodesGrid');
+        if (Object.keys(_tmdbThumbs).length > 0) {
+          UI.toast(`${Object.keys(_tmdbThumbs).length} miniaturas de TMDB cargadas`, 'success', 2000);
+        }
+      } catch (e) {
+        console.warn('[TMDB] Background load failed:', e);
+      }
+    })();
+  }
+
+  // ── AnimeonlineNinja (en background) ─────────────────────
+  if (CONFIG.aonEnabled) {
+    (async () => {
+      try {
+        _aonSlug = await AnimeonlineAPI.findSlug(
+          _anime.title,
+          _anime.title_english || '',
+          _anime.mal_id
+        );
+
+        const aonDot  = document.getElementById('aonLoadingDot');
+        const srcAON  = document.getElementById('srcAON');
+        const slugInfo = document.getElementById('aonSlugInfo');
+
+        if (_aonSlug) {
+          // Cargar lista de episodios de AON
+          _aonEpisodes = await AnimeonlineAPI.getEpisodeList(_aonSlug);
+
+          if (aonDot)   { aonDot.style.background = 'var(--accent-green)'; aonDot.style.animation = 'none'; }
+          if (slugInfo) { slugInfo.style.display = 'block'; slugInfo.textContent = `Slug AON: "${_aonSlug}" · ${_aonEpisodes.length} episodios encontrados`; }
+          if (srcAON)   { srcAON.textContent = `🌐 AnimeonlineNinja (${_aonEpisodes.length} eps)`; }
+          UI.toast(`AnimeonlineNinja: ${_aonEpisodes.length} episodios encontrados`, 'success', 2500);
+        } else {
+          if (aonDot)  { aonDot.style.background = 'var(--accent-rose)'; aonDot.style.animation = 'none'; }
+          if (srcAON)  { srcAON.textContent = '🌐 AON (no encontrado)'; srcAON.disabled = true; }
+          if (slugInfo){ slugInfo.style.display = 'block'; slugInfo.textContent = 'No se encontró en AnimeonlineNinja'; }
+        }
+      } catch (e) {
+        console.warn('[AON] Background load failed:', e);
+        const aonDot = document.getElementById('aonLoadingDot');
+        if (aonDot) { aonDot.style.background = 'var(--accent-rose)'; aonDot.style.animation = 'none'; }
+      }
+    })();
+  }
+}
+
+// ── Cambiar fuente de episodios ────────────────────────────
+function setEpSource(source) {
+  _epSource = source;
+  document.getElementById('srcMAL').classList.toggle('active', source === 'mal');
+  document.getElementById('srcAON').classList.toggle('active', source === 'aon');
+  renderEpisodesPage(1);
+}
+
+// ── Render de página de episodios ─────────────────────────
 function renderEpisodesPage(page) {
   _epPage = page;
+
+  // Decidir fuente
+  const useAON = (_epSource === 'aon' && _aonEpisodes.length > 0);
+  const source  = useAON ? _aonEpisodes : _allEpisodes;
+
+  // Badge de fuente
+  const badge = document.getElementById('epSourceBadge');
+  if (badge) {
+    badge.style.display = 'inline-flex';
+    if (useAON) {
+      badge.innerHTML = '<span class="badge badge-cyan">🌐 AnimeonlineNinja</span>';
+    } else {
+      badge.innerHTML = '<span class="badge badge-violet">MAL / TMDB</span>';
+    }
+  }
+
+  if (useAON) {
+    renderAONEpisodesPage(page);
+    return;
+  }
+
+  // Fuente MAL
   const start = (page - 1) * EP_PER_PAGE;
   const slice = _allEpisodes.slice(start, start + EP_PER_PAGE);
   const total = _allEpisodes.length;
 
-  document.getElementById('epCount').textContent =
-    total ? `${total} episodios encontrados` : 'Sin episodios';
-
-  document.getElementById('epPageInfo').textContent =
-    `Pág ${page} / ${Math.ceil(total / EP_PER_PAGE) || 1}`;
-
+  document.getElementById('epCount').textContent = total ? `${total} episodios` : 'Sin episodios';
+  document.getElementById('epPageInfo').textContent = `Pág ${page} / ${Math.ceil(total / EP_PER_PAGE) || 1}`;
   document.getElementById('epPagePrev').disabled = page <= 1;
   document.getElementById('epPageNext').disabled = start + EP_PER_PAGE >= total;
 
@@ -327,13 +406,56 @@ function renderEpisodesPage(page) {
     return;
   }
 
-  document.getElementById('episodesGrid').innerHTML =
-    slice.map(ep => UI.renderEpisodeCard(ep, animeId, _animeSlug, _anime?.title || '')).join('');
+  document.getElementById('episodesGrid').innerHTML = slice.map(ep => {
+    const epNum = ep.mal_id || ep.episode_id;
+    return UI.renderEpisodeCard(ep, animeId, _animeSlug, _anime?.title || '', {
+      tmdbThumb: _tmdbThumbs[epNum] || null,
+      aonSlug:   _aonSlug,
+    });
+  }).join('');
+}
+
+// ── Render episodios desde AON ─────────────────────────────
+function renderAONEpisodesPage(page) {
+  const start = (page - 1) * EP_PER_PAGE;
+  const slice = _aonEpisodes.slice(start, start + EP_PER_PAGE);
+  const total = _aonEpisodes.length;
+
+  document.getElementById('epCount').textContent = `${total} episodios (AON)`;
+  document.getElementById('epPageInfo').textContent = `Pág ${page} / ${Math.ceil(total / EP_PER_PAGE) || 1}`;
+  document.getElementById('epPagePrev').disabled = page <= 1;
+  document.getElementById('epPageNext').disabled = start + EP_PER_PAGE >= total;
+
+  if (!slice.length) {
+    document.getElementById('episodesGrid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">🌐</div>
+        <h3>Sin episodios en AnimeonlineNinja</h3>
+      </div>`;
+    return;
+  }
+
+  // Convertir episodios AON al formato de renderEpisodeCard
+  document.getElementById('episodesGrid').innerHTML = slice.map(ep => {
+    // Crear objeto compatible con renderEpisodeCard
+    const fakeEp = {
+      mal_id:  ep.num,
+      title:   ep.title || `Episodio ${ep.num}`,
+      images:  ep.thumb ? { jpg: { image_url: ep.thumb } } : null,
+      aired:   null,
+    };
+    return UI.renderEpisodeCard(fakeEp, animeId, _aonSlug || _animeSlug, _anime?.title || '', {
+      tmdbThumb: _tmdbThumbs[ep.num] || null,
+      aonUrl:    ep.url,
+      aonSlug:   _aonSlug,
+    });
+  }).join('');
 }
 
 function loadEpisodePage(dir) {
+  const source  = (_epSource === 'aon' && _aonEpisodes.length > 0) ? _aonEpisodes : _allEpisodes;
   const newPage = dir === 'next' ? _epPage + 1 : _epPage - 1;
-  const max = Math.ceil(_allEpisodes.length / EP_PER_PAGE);
+  const max     = Math.ceil(source.length / EP_PER_PAGE);
   if (newPage >= 1 && newPage <= max) {
     renderEpisodesPage(newPage);
     document.getElementById('panelEpisodes').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -342,19 +464,27 @@ function loadEpisodePage(dir) {
 
 function filterEpisodes(q) {
   if (!q) { renderEpisodesPage(_epPage); return; }
-  const filtered = _allEpisodes.filter(ep =>
-    String(ep.mal_id || ep.episode_id).includes(q) ||
-    (ep.title || '').toLowerCase().includes(q)
-  );
+  const source   = (_epSource === 'aon' && _aonEpisodes.length > 0) ? _aonEpisodes : _allEpisodes;
+  const filtered = source.filter(ep => {
+    const num   = String(ep.mal_id || ep.episode_id || ep.num || '');
+    const title = (ep.title || '').toLowerCase();
+    return num.includes(q) || title.includes(q);
+  });
   const grid = document.getElementById('episodesGrid');
   if (!filtered.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Sin resultados para "${q}"</p></div>`;
     return;
   }
-  grid.innerHTML = filtered.map(ep => UI.renderEpisodeCard(ep, animeId, _animeSlug, _anime?.title || '')).join('');
+  grid.innerHTML = filtered.map(ep => {
+    const epNum = ep.mal_id || ep.episode_id || ep.num;
+    const fakeEp = ep.num ? { mal_id: ep.num, title: ep.title, images: ep.thumb ? { jpg: { image_url: ep.thumb } } : null } : ep;
+    return UI.renderEpisodeCard(fakeEp, animeId, _aonSlug || _animeSlug, _anime?.title || '', {
+      tmdbThumb: _tmdbThumbs[epNum] || null,
+      aonSlug:   _aonSlug,
+    });
+  }).join('');
 }
 
-// ── Synopsis toggle ────────────────────────────────────────
 function toggleSynopsis() {
   const el  = document.getElementById('synopsis');
   const btn = document.getElementById('synopsisBtn');
@@ -362,11 +492,10 @@ function toggleSynopsis() {
   btn.textContent = el.classList.contains('collapsed') ? 'Leer más ↓' : 'Leer menos ↑';
 }
 
-// ── Favorites ─────────────────────────────────────────────
 function handleFav() {
   if (!_anime) return;
   const added = Favorites.toggleFavorite(_anime);
-  const btn = document.getElementById('favBtn');
+  const btn   = document.getElementById('favBtn');
   if (added) {
     btn.innerHTML = '♥ En favoritos';
     btn.style.cssText = 'background:rgba(251,113,133,0.2);border-color:var(--accent-rose);color:var(--accent-rose)';
@@ -379,8 +508,8 @@ function handleFav() {
 }
 
 // ── Tabs ──────────────────────────────────────────────────
-const _tabs = { episodes: 'panelEpisodes', chars: 'panelChars', recs: 'panelRecs' };
-const _tabBtns = { episodes: 'tabEpisodes', chars: 'tabChars', recs: 'tabRecs' };
+const _tabs    = { episodes: 'panelEpisodes', chars: 'panelChars', recs: 'panelRecs' };
+const _tabBtns = { episodes: 'tabEpisodes',   chars: 'tabChars',   recs: 'tabRecs'   };
 
 async function switchTab(tab) {
   Object.entries(_tabs).forEach(([k, v]) => {
@@ -390,8 +519,8 @@ async function switchTab(tab) {
     const btn = document.getElementById(v);
     if (btn) {
       btn.style.background = k === tab ? 'var(--accent-violet)' : '';
-      btn.style.color = k === tab ? 'white' : '';
-      btn.className = `btn btn-sm ${k === tab ? '' : 'btn-ghost'}`;
+      btn.style.color      = k === tab ? 'white' : '';
+      btn.className        = `btn btn-sm ${k === tab ? '' : 'btn-ghost'}`;
     }
   });
 
@@ -407,7 +536,7 @@ async function loadCharacters() {
   const grid = document.getElementById('charsGrid');
   UI.renderSkeletonCards(12, 'charsGrid');
   try {
-    const data = await API.getAnimeCharacters(animeId);
+    const data  = await API.getAnimeCharacters(animeId);
     const chars = data.data?.slice(0, 24) || [];
     if (!chars.length) { grid.innerHTML = '<p class="text-secondary text-sm" style="grid-column:1/-1">Sin datos de personajes</p>'; return; }
     grid.innerHTML = chars.map(c => `
@@ -422,7 +551,7 @@ async function loadCharacters() {
         </div>
       </div>
     `).join('');
-  } catch (e) { grid.innerHTML = '<p class="text-secondary" style="grid-column:1/-1">Error cargando personajes</p>'; }
+  } catch { grid.innerHTML = '<p class="text-secondary" style="grid-column:1/-1">Error cargando personajes</p>'; }
 }
 
 async function loadRecommendations() {
@@ -432,7 +561,7 @@ async function loadRecommendations() {
     const recs = data.data?.slice(0, 18) || [];
     if (!recs.length) { document.getElementById('recsGrid').innerHTML = '<p class="text-secondary" style="grid-column:1/-1">Sin recomendaciones</p>'; return; }
     UI.renderAnimeGrid(recs.map(r => r.entry), 'recsGrid');
-  } catch (e) { document.getElementById('recsGrid').innerHTML = '<p class="text-secondary" style="grid-column:1/-1">Error cargando recomendaciones</p>'; }
+  } catch { document.getElementById('recsGrid').innerHTML = '<p class="text-secondary" style="grid-column:1/-1">Error cargando recomendaciones</p>'; }
 }
 </script>
 
