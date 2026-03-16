@@ -76,6 +76,7 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
@@ -991,10 +992,12 @@ h1, h2, h3, h4, h5 {
   position: relative;
   padding: 3rem 2rem;
   max-width: var(--content-max);
+  width: 100%;
   margin: 0 auto;
   display: flex;
   gap: 3rem;
   align-items: flex-end;
+  box-sizing: border-box;
 }
 
 .anime-poster {
@@ -1008,7 +1011,7 @@ h1, h2, h3, h4, h5 {
 
 .anime-poster img { width: 100%; display: block; }
 
-.anime-info { flex: 1; min-width: 0; }
+.anime-info { flex: 1; min-width: 0; max-width: 100%; overflow: hidden; }
 
 .anime-genres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.875rem 0; }
 
@@ -1670,7 +1673,7 @@ h1, h2, h3, h4, h5 {
 }
 
 @media (max-width: 1024px) {
-  .anime-hero-content { flex-direction: column; }
+  .anime-hero-content { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
   .anime-poster { width: 160px; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
@@ -1698,10 +1701,25 @@ h1, h2, h3, h4, h5 {
   .footer-grid { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; }
 
-  .anime-poster { width: 130px; }
+  /* ── Anime detail page mobile fixes ── */
+  .anime-hero-content {
+    padding: 2rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+  .anime-poster { width: 120px; }
+  .anime-title-main { font-size: 1.5rem; }
+  .anime-stats { gap: 1rem; }
+  .anime-synopsis { font-size: 0.9rem; }
+  .anime-genres { gap: 0.35rem; }
 
   .server-selector { justify-content: flex-start; }
   .player-controls-bar { flex-direction: column; align-items: flex-start; }
+
+  /* ── Prevent any element from breaking layout ── */
+  .anime-hero { overflow: hidden; }
+  .page-wrapper { overflow-x: hidden; }
 }
 
 @media (max-width: 480px) {
@@ -1709,4 +1727,13 @@ h1, h2, h3, h4, h5 {
   .section-title { font-size: 1.15rem; }
   .hero-title { font-size: 1.5rem; }
   .btn { padding: 0.6rem 1.1rem; font-size: 0.875rem; }
+
+  /* Prevent badge rows from overflowing */
+  .anime-genres { flex-wrap: wrap; }
+  .anime-stats { flex-wrap: wrap; }
+  .ep-nav-buttons { flex-wrap: wrap; }
+
+  /* Episode cards on very small screens */
+  .ep-thumb { width: 72px; height: 44px; }
+  .ep-card { gap: 0.625rem; padding: 0.625rem 0.75rem; }
 }
