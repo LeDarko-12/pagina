@@ -10,7 +10,7 @@ const UI = (() => {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
-    const icons = { success: '✓', error: '✕', info: 'ℹ', heart: '♥' };
+    const icons  = { success: '✓', error: '✕', info: 'ℹ', heart: '♥' };
     const colors = { success: 'var(--accent-green)', error: 'var(--accent-rose)', info: 'var(--accent-light)', heart: 'var(--accent-rose)' };
 
     const el = document.createElement('div');
@@ -20,11 +20,7 @@ const UI = (() => {
       <span>${msg}</span>
     `;
     container.appendChild(el);
-
-    setTimeout(() => {
-      el.classList.add('hiding');
-      setTimeout(() => el.remove(), 300);
-    }, duration);
+    setTimeout(() => { el.classList.add('hiding'); setTimeout(() => el.remove(), 300); }, duration);
   }
 
   // ─── SKELETON LOADERS ────────────────────────────────────
@@ -61,16 +57,16 @@ const UI = (() => {
   function renderAnimeCard(anime, options = {}) {
     const {
       linkPrefix = 'anime.html',
-      showFav = true,
+      showFav    = true,
       extraClass = '',
-      lazy = true,
+      lazy       = true,
     } = options;
 
-    const poster   = API.getPoster(anime);
-    const isFav    = showFav && Favorites.isFavorite(anime.mal_id);
-    const status   = API.getStatusBadge(anime.status);
-    const watched  = Favorites.getLastWatched(anime.mal_id);
-    const score    = anime.score ? anime.score.toFixed(1) : null;
+    const poster  = API.getPoster(anime);
+    const isFav   = showFav && Favorites.isFavorite(anime.mal_id);
+    const status  = API.getStatusBadge(anime.status);
+    const watched = Favorites.getLastWatched(anime.mal_id);
+    const score   = anime.score ? anime.score.toFixed(1) : null;
 
     return `
       <div class="anime-card ${extraClass}" onclick="window.location.href='${linkPrefix}?id=${anime.mal_id}'" data-id="${anime.mal_id}">
@@ -79,17 +75,14 @@ const UI = (() => {
             ${lazy ? 'loading="lazy"' : ''}
             src="${poster}"
             alt="${escapeHtml(anime.title)}"
-            onerror="this.src='assets/placeholder.jpg'"
+            onerror="UI._onPosterError(this, ${anime.mal_id}, '${encodeURIComponent(anime.title)}', '${encodeURIComponent(anime.title_english || '')}')"
           >
           <div class="anime-card-overlay">
             <div class="anime-card-play">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
             </div>
           </div>
-          ${score ? `
-          <div class="anime-card-score">
-            <span>★</span>${score}
-          </div>` : ''}
+          ${score ? `<div class="anime-card-score"><span>★</span>${score}</div>` : ''}
           <div class="anime-card-status">
             <span class="badge ${status.cls}">${status.label}</span>
           </div>
@@ -99,12 +92,9 @@ const UI = (() => {
             onclick="event.stopPropagation(); UI.toggleFavBtn(this, ${anime.mal_id})"
             title="${isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}"
             data-anime='${encodeURIComponent(JSON.stringify({
-              mal_id: anime.mal_id,
-              title: anime.title,
-              images: anime.images,
-              score: anime.score,
-              episodes: anime.episodes,
-              status: anime.status,
+              mal_id: anime.mal_id, title: anime.title,
+              images: anime.images, score: anime.score,
+              episodes: anime.episodes, status: anime.status,
             }))}'
           >${isFav ? '♥' : '♡'}</button>` : ''}
           ${watched ? `
@@ -126,7 +116,22 @@ const UI = (() => {
     `;
   }
 
-  // ─── TOGGLE FAV BUTTON ───────────────────────────────────
+  // Fallback TMDB para pósters de cards
+  async function _onPosterError(img, malId, title, titleEn) {
+    // Evitar loop si TMDB también falla
+    img.onerror = () => { img.src = 'assets/placeholder.jpg'; };
+    if (!CONFIG.tmdbEnabled) { img.src = 'assets/placeholder.jpg'; return; }
+    try {
+      const url = await TMDB.getPoster(
+        decodeURIComponent(title),
+        decodeURIComponent(titleEn)
+      );
+      img.src = url || 'assets/placeholder.jpg';
+    } catch {
+      img.src = 'assets/placeholder.jpg';
+    }
+  }
+
   function toggleFavBtn(btn, malId) {
     try {
       const animeData = JSON.parse(decodeURIComponent(btn.dataset.anime));
@@ -148,7 +153,6 @@ const UI = (() => {
     container.innerHTML = animeList.map(a => renderAnimeCard(a, options)).join('');
   }
 
-  // ─── RENDER CAROUSEL ─────────────────────────────────────
   function renderCarousel(animeList, containerId, options = {}) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -156,23 +160,86 @@ const UI = (() => {
   }
 
   // ─── EPISODE CARD ────────────────────────────────────────
-  function renderEpisodeCard(ep, animeId, animeSlug, animeTitle) {
+  /**
+   * Renderiza una card de episodio.
+   * @param {object} ep          Datos del episodio (desde Jikan)
+   * @param {number} animeId     MAL ID del anime
+   * @param {string} animeSlug   Slug para el reproductor
+   * @param {string} animeTitle  Título del anime
+   * @param {object} extras      { tmdbThumb, aonUrl, aonSlug }
+   */
+  function renderEpisodeCard(ep, animeId, animeSlug, animeTitle, extras = {}) {
+    const { tmdbThumb = null, aonUrl = null, aonSlug = null } = extras;
     const watched = Favorites.isWatched(animeId, ep.mal_id || ep.episode_id);
-    const thumb = ep.images?.jpg?.image_url || 'assets/ep-placeholder.jpg';
-    const epNum = ep.mal_id || ep.episode_id;
+    const epNum   = ep.mal_id || ep.episode_id;
+
+    // Prioridad de imagen: TMDB > MAL > placeholder
+    const malThumb = ep.images?.jpg?.image_url || '';
+    const thumb    = tmdbThumb || malThumb || 'assets/ep-placeholder.jpg';
+
+    // URL del episodio: incluye slug de AON si existe
+    const slugParam    = aonSlug ? encodeURIComponent(aonSlug) : encodeURIComponent(animeSlug);
+    const episodeHref  = `episode.html?anime=${animeId}&ep=${epNum}&slug=${slugParam}&title=${encodeURIComponent(animeTitle)}`;
 
     return `
       <div class="ep-card${watched ? ' watched' : ''}"
-           onclick="window.location.href='episode.html?anime=${animeId}&ep=${epNum}&slug=${encodeURIComponent(animeSlug)}&title=${encodeURIComponent(animeTitle)}'">
-        <img class="ep-thumb" src="${thumb}" loading="lazy" alt="Ep ${epNum}" onerror="this.src='assets/ep-placeholder.jpg'">
+           onclick="window.location.href='${episodeHref}'"
+           data-ep="${epNum}" data-anime="${animeId}">
+        <div class="ep-thumb-wrapper" style="flex-shrink:0">
+          <img class="ep-thumb"
+               src="${thumb}"
+               loading="lazy"
+               alt="Ep ${epNum}"
+               data-mal-thumb="${malThumb}"
+               data-ep-num="${epNum}"
+               data-anime-id="${animeId}"
+               onerror="_epThumbFallback(this)">
+          <div class="ep-thumb-play">▶</div>
+        </div>
         <div style="flex:1;min-width:0">
-          <div class="ep-num">Episodio ${epNum}</div>
+          <div class="ep-num">Episodio ${epNum}${aonUrl ? ' <span class="badge badge-cyan" style="font-size:0.65rem;padding:1px 5px;vertical-align:middle">AON</span>' : ''}</div>
           <div class="ep-title">${ep.title ? escapeHtml(ep.title) : `Episodio ${epNum}`}</div>
           ${ep.aired ? `<div class="ep-desc">${API.formatDate(ep.aired)}</div>` : ''}
         </div>
         ${watched ? `<div class="ep-watched-badge"><span class="badge badge-green">✓ Visto</span></div>` : ''}
       </div>
     `;
+  }
+
+  // Fallback para thumbnails de episodios
+  window._epThumbFallback = function(img) {
+    const malThumb = img.dataset.malThumb;
+    if (malThumb && img.src !== malThumb) {
+      img.onerror = () => { img.src = 'assets/ep-placeholder.jpg'; };
+      img.src = malThumb;
+    } else {
+      img.src = 'assets/ep-placeholder.jpg';
+      img.onerror = null;
+    }
+  };
+
+  /**
+   * Actualiza las miniaturas de episodios con imágenes de TMDB
+   * una vez que se han cargado de forma asíncrona.
+   * @param {object} thumbMap  { epNum: imageUrl }
+   * @param {string} containerId  ID del contenedor de episodios
+   */
+  function updateEpisodeThumbnails(thumbMap, containerId = 'episodesGrid') {
+    if (!thumbMap || !Object.keys(thumbMap).length) return;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('img[data-ep-num]').forEach(img => {
+      const epNum = parseInt(img.dataset.epNum);
+      if (thumbMap[epNum]) {
+        img.src = thumbMap[epNum];
+        img.onerror = () => {
+          const malThumb = img.dataset.malThumb;
+          img.src = malThumb || 'assets/ep-placeholder.jpg';
+          img.onerror = null;
+        };
+      }
+    });
   }
 
   // ─── GENRE BADGES ────────────────────────────────────────
@@ -188,10 +255,7 @@ const UI = (() => {
     const container = document.getElementById(containerId);
     if (!container) return;
     const list = Favorites.getContinueWatching();
-    if (list.length === 0) {
-      container.closest('section')?.remove();
-      return;
-    }
+    if (list.length === 0) { container.closest('section')?.remove(); return; }
     container.innerHTML = list.map(h => `
       <div class="continue-card" onclick="window.location.href='episode.html?anime=${h.mal_id}&ep=${h.ep}&slug=${encodeURIComponent(h.slug || '')}&title=${encodeURIComponent(h.title)}'">
         <img class="continue-thumb" src="${h.image}" loading="lazy" alt="${escapeHtml(h.title)}" onerror="this.src='assets/placeholder.jpg'">
@@ -234,10 +298,10 @@ const UI = (() => {
           </div>
           <h1 class="hero-title">${escapeHtml(a.title)}</h1>
           <div class="hero-meta">
-            ${a.score ? `<span class="hero-score"><span>★</span>${a.score.toFixed(1)}</span>` : ''}
-            ${a.year  ? `<span style="color:var(--text-secondary)">${a.year}</span>` : ''}
+            ${a.score    ? `<span class="hero-score"><span>★</span>${a.score.toFixed(1)}</span>` : ''}
+            ${a.year     ? `<span style="color:var(--text-secondary)">${a.year}</span>` : ''}
             ${a.episodes ? `<span style="color:var(--text-secondary)">${a.episodes} Eps</span>` : ''}
-            ${a.type ? `<span class="badge badge-dark">${a.type}</span>` : ''}
+            ${a.type     ? `<span class="badge badge-dark">${a.type}</span>` : ''}
           </div>
           <p class="hero-desc">${escapeHtml((a.synopsis || '').substring(0, 220))}${a.synopsis?.length > 220 ? '...' : ''}</p>
           <div class="hero-actions">
@@ -274,65 +338,48 @@ const UI = (() => {
     _heroIndex = idx;
   }
 
-  // ─── NAVBAR SCROLL ──────────────────────────────────────
+  // ─── NAVBAR ──────────────────────────────────────────────
   function initNavbar() {
     const nav = document.querySelector('.navbar');
     if (!nav) return;
-    window.addEventListener('scroll', () => {
-      nav.classList.toggle('scrolled', window.scrollY > 80);
-    }, { passive: true });
-
-    // Mobile toggle
+    window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 80), { passive: true });
     const toggle = nav.querySelector('.nav-mobile-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', () => nav.classList.toggle('mobile-open'));
-    }
+    if (toggle) toggle.addEventListener('click', () => nav.classList.toggle('mobile-open'));
   }
 
-  // ─── BACK TO TOP ────────────────────────────────────────
   function initBackToTop() {
     const btn = document.getElementById('backToTop');
     if (!btn) return;
-    window.addEventListener('scroll', () => {
-      btn.classList.toggle('visible', window.scrollY > 400);
-    }, { passive: true });
+    window.addEventListener('scroll', () => btn.classList.toggle('visible', window.scrollY > 400), { passive: true });
     btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   }
 
-  // ─── CAROUSEL SCROLL BUTTONS ────────────────────────────
   function initCarouselBtn(prevId, nextId, carouselId) {
     const prev = document.getElementById(prevId);
     const next = document.getElementById(nextId);
     const c    = document.getElementById(carouselId);
     if (!prev || !next || !c) return;
-
-    const scroll = (dir) => {
-      const w = c.firstElementChild?.offsetWidth + 20 || 200;
-      c.scrollBy({ left: dir * w * 3, behavior: 'smooth' });
-    };
+    const scroll = dir => { const w = (c.firstElementChild?.offsetWidth || 180) + 20; c.scrollBy({ left: dir * w * 3, behavior: 'smooth' }); };
     prev.addEventListener('click', () => scroll(-1));
     next.addEventListener('click', () => scroll(1));
   }
 
-  // ─── LIVE SEARCH NAV ────────────────────────────────────
+  // ─── LIVE SEARCH NAV ─────────────────────────────────────
   function initNavSearch() {
     const input    = document.getElementById('navSearchInput');
     const dropdown = document.getElementById('searchDropdown');
     if (!input || !dropdown) return;
 
     let debounceTimer;
-
     input.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       const q = input.value.trim();
       if (q.length < 2) { dropdown.classList.remove('visible'); return; }
-
       debounceTimer = setTimeout(async () => {
         try {
-          const data = await API.searchAnime({ q, page: 1 });
+          const data    = await API.searchAnime({ q, page: 1 });
           const results = data.data?.slice(0, 6) || [];
           if (!results.length) { dropdown.classList.remove('visible'); return; }
-
           dropdown.innerHTML = results.map(a => `
             <div class="search-dropdown-item" onclick="window.location.href='anime.html?id=${a.mal_id}'">
               <img class="search-dropdown-thumb" src="${API.getPoster(a)}" loading="lazy" onerror="this.src='assets/placeholder.jpg'">
@@ -351,14 +398,14 @@ const UI = (() => {
       }, 350);
     });
 
-    input.addEventListener('keydown', (e) => {
+    input.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         const q = input.value.trim();
         if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
       }
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (!input.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.classList.remove('visible');
       }
@@ -368,18 +415,12 @@ const UI = (() => {
   // ─── PAGE LOADER ─────────────────────────────────────────
   function hideLoader() {
     const loader = document.getElementById('pageLoader');
-    if (loader) {
-      setTimeout(() => loader.classList.add('hidden'), 400);
-    }
+    if (loader) setTimeout(() => loader.classList.add('hidden'), 400);
   }
 
-  // ─── CLEAR CONTINUE WATCHING ─────────────────────────────
   function clearContinue() {
     if (!confirm('¿Limpiar el historial de "continuar viendo"?')) return;
-    try {
-      localStorage.removeItem('ss_history');
-      localStorage.removeItem('ss_watching');
-    } catch(e) {}
+    try { localStorage.removeItem('ss_history'); localStorage.removeItem('ss_watching'); } catch {}
     const section = document.getElementById('continueSection');
     if (section) section.style.display = 'none';
     toast('Historial limpiado', 'info');
@@ -391,7 +432,6 @@ const UI = (() => {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // Set active nav link
   function setActiveNav() {
     const page = location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -399,16 +439,13 @@ const UI = (() => {
     });
   }
 
-  // Update document title & meta
   function setPageMeta(title, description = '', image = '') {
     document.title = `${title} — ${CONFIG.siteName}`;
     if (description) {
       document.querySelector('meta[name="description"]')?.setAttribute('content', description);
       document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
     }
-    if (image) {
-      document.querySelector('meta[property="og:image"]')?.setAttribute('content', image);
-    }
+    if (image) document.querySelector('meta[property="og:image"]')?.setAttribute('content', image);
     document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${title} — ${CONFIG.siteName}`);
   }
 
@@ -420,6 +457,7 @@ const UI = (() => {
     renderAnimeGrid,
     renderCarousel,
     renderEpisodeCard,
+    updateEpisodeThumbnails,
     renderGenreBadges,
     renderContinueWatching,
     initHero,
@@ -434,11 +472,10 @@ const UI = (() => {
     setActiveNav,
     setPageMeta,
     toggleFavBtn,
+    _onPosterError,
   };
 })();
 
-// Expose globally
+// Globales
 window.UI = UI;
-
-// Exponer escapeHtml globalmente
 function escapeHtml(str) { return UI.escapeHtml(str); }
