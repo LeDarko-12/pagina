@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — SakuraStream</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body { font-family: 'DM Sans', sans-serif; background: #06060f; color: #e8e6ff; min-height: 100vh; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; }
+img { display: block; max-width: 100%; }
+ul { list-style: none; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #0a0a1a; }
+::-webkit-scrollbar-thumb { background: #4c1d95; border-radius: 99px; }
+
+/* ─── VARIABLES ──────────────────────────────────────────── */
+:root {
+  --bg0: #06060f;
+  --bg1: #0c0c1e;
+  --bg2: #111128;
+  --bg3: #181835;
+  --bg4: #1e1e40;
+  --surface: #13132a;
+
+  --violet: #7c3aed;
+  --violet-light: #a78bfa;
+  --violet-glow: rgba(124,58,237,0.3);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34,211,238,0.15);
+  --rose: #fb7185;
+  --amber: #fbbf24;
+  --green: #34d399;
+  --red: #f87171;
+
+  --border: rgba(255,255,255,0.07);
+  --border-v: rgba(124,58,237,0.3);
+
+  --text1: #f0efff;
+  --text2: #9494c0;
+  --text3: #4a4a72;
+
+  --radius: 10px;
+  --radius-sm: 7px;
+  --radius-lg: 16px;
+
+  --sidebar-w: 240px;
+  --topbar-h: 58px;
+
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --trans: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+#loginScreen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg0);
+  z-index: 1000;
+}
+
+.login-card {
+  width: 100%; max-width: 400px;
+  background: var(--bg2);
+  border: 1px solid var(--border-v);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  box-shadow: 0 0 80px rgba(124,58,237,0.15);
+}
+
+.login-logo {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #7c3aed, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.25rem;
+}
+
+.login-sub { font-size: 0.85rem; color: var(--text3); margin-bottom: 2rem; font-family: var(--font-mono); }
+
+.login-error {
+  background: rgba(251,113,133,0.1);
+  border: 1px solid rgba(251,113,133,0.3);
+  color: var(--rose);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+#adminApp { display: none; }
+
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo-main {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #7c3aed, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar-logo-sub {
+  font-size: 0.7rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-nav {
+  padding: 0.75rem 0.625rem;
+  flex: 1;
+}
+
+.nav-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  padding: 0.875rem 0.625rem 0.4rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: var(--trans);
+  margin-bottom: 1px;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover { color: var(--text1); background: var(--bg3); }
+
+.nav-item.active {
+  color: var(--text1);
+  background: rgba(124,58,237,0.15);
+  border-color: var(--border-v);
+}
+
+.nav-item .nav-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+.nav-item.active .nav-icon { opacity: 1; }
+
+.nav-item .nav-badge {
+  margin-left: auto;
+  background: var(--violet);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-family: var(--font-mono);
+}
+
+.sidebar-footer {
+  padding: 0.75rem 0.875rem;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.sidebar-avatar {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--violet), var(--cyan));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-name { font-weight: 600; color: var(--text1); }
+.sidebar-user-role { font-size: 0.7rem; color: var(--text3); font-family: var(--font-mono); }
+
+.logout-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--text3);
+  font-size: 0.75rem;
+  transition: var(--trans);
+}
+.logout-btn:hover { color: var(--rose); background: rgba(251,113,133,0.1); }
+
+/* ─── MAIN CONTENT ───────────────────────────────────────── */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  height: var(--topbar-h);
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text1);
+}
+
+.topbar-actions { display: flex; align-items: center; gap: 0.5rem; }
+
+.page-content { padding: 1.75rem; flex: 1; }
+
+/* ─── PANELS ─────────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── DASHBOARD STATS ────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.25rem 1rem;
+  position: relative;
+  overflow: hidden;
+  transition: var(--trans);
+}
+
+.stat-card:hover { border-color: var(--border-v); }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  opacity: 0;
+  transition: var(--trans);
+}
+.stat-card:hover::before { opacity: 1; }
+
+.stat-label { font-size: 0.72rem; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+.stat-val { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--text1); line-height: 1; }
+.stat-val.accent { background: linear-gradient(135deg, var(--violet-light), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.stat-sub { font-size: 0.72rem; color: var(--text3); margin-top: 0.35rem; }
+.stat-icon { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; opacity: 0.15; }
+
+/* ─── SECTION TITLES ─────────────────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--violet), var(--cyan));
+  border-radius: 2px;
+}
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  transition: var(--trans);
+  cursor: pointer;
+  white-space: nowrap;
+  border: none;
+}
+
+.btn-primary { background: linear-gradient(135deg, var(--violet), #5b21b6); color: white; box-shadow: 0 0 20px var(--violet-glow); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(124,58,237,0.45); }
+
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text1); background: var(--bg3); border-color: var(--border-v); }
+
+.btn-danger { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+.btn-danger:hover { background: rgba(248,113,113,0.2); }
+
+.btn-cyan { background: rgba(34,211,238,0.12); color: var(--cyan); border: 1px solid rgba(34,211,238,0.25); }
+.btn-cyan:hover { background: rgba(34,211,238,0.2); }
+
+.btn-sm { padding: 0.3rem 0.75rem; font-size: 0.78rem; }
+.btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; border-radius: var(--radius-sm); }
+.btn:disabled { opacity: 0.45; pointer-events: none; }
+
+/* ─── FORM ELEMENTS ──────────────────────────────────────── */
+.field { margin-bottom: 1rem; }
+.field-label { font-size: 0.78rem; font-weight: 600; color: var(--text2); margin-bottom: 0.4rem; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.input, .select, .textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text1);
+  font-size: 0.875rem;
+  outline: none;
+  transition: var(--trans);
+}
+
+.input { height: 40px; padding: 0 0.875rem; }
+.select { height: 40px; padding: 0 0.875rem; appearance: none; cursor: pointer; }
+.textarea { padding: 0.625rem 0.875rem; min-height: 100px; resize: vertical; font-family: var(--font-mono); font-size: 0.8rem; }
+
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+  background: var(--bg4);
+}
+
+.input::placeholder, .textarea::placeholder { color: var(--text3); }
+
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.input-group .input { flex: 1; }
+
+/* ─── CARDS / TABLES ─────────────────────────────────────── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.card-head {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text1);
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.card-body { padding: 1.25rem; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text3);
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: middle;
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: rgba(255,255,255,0.02); }
+.table td .mono { font-family: var(--font-mono); font-size: 0.78rem; color: var(--cyan); }
+
+/* ─── BADGES ─────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge-violet { background: rgba(124,58,237,0.18); color: var(--violet-light); border: 1px solid rgba(124,58,237,0.3); }
+.badge-cyan { background: rgba(34,211,238,0.12); color: var(--cyan); border: 1px solid rgba(34,211,238,0.2); }
+.badge-green { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+.badge-amber { background: rgba(251,191,36,0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.25); }
+.badge-red { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+
+/* ─── SEARCH BAR ─────────────────────────────────────────── */
+.search-wrap { position: relative; }
+.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+.search-input { height: 40px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text1); font-size: 0.875rem; outline: none; padding-left: 2.5rem; padding-right: 1rem; width: 100%; transition: var(--trans); }
+.search-input:focus { border-color: var(--violet); background: var(--bg4); box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.search-input::placeholder { color: var(--text3); }
+
+/* ─── THUMBNAIL GRID ─────────────────────────────────────── */
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.thumb-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: var(--trans);
+}
+.thumb-item:hover { border-color: var(--border-v); }
+.thumb-item.overridden { border-color: rgba(52,211,153,0.35); }
+
+.thumb-img-wrap {
+  aspect-ratio: 16/9;
+  background: var(--bg0);
+  position: relative;
+  overflow: hidden;
+}
+.thumb-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-badge {
+  position: absolute;
+  top: 6px; left: 6px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+.thumb-override-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: rgba(52,211,153,0.85);
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.thumb-body { padding: 0.625rem 0.75rem; }
+.thumb-ep { font-size: 0.72rem; color: var(--text3); font-family: var(--font-mono); margin-bottom: 2px; }
+.thumb-title { font-size: 0.8rem; font-weight: 500; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.5rem; }
+.thumb-actions { display: flex; gap: 0.35rem; }
+
+/* ─── ANIME CARD MINI ────────────────────────────────────── */
+.anime-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.875rem;
+}
+
+.anime-mini {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: var(--trans);
+  cursor: pointer;
+}
+.anime-mini:hover { border-color: var(--border-v); transform: translateY(-2px); }
+.anime-mini-thumb { aspect-ratio: 2/3; background: var(--bg0); overflow: hidden; }
+.anime-mini-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.anime-mini-body { padding: 0.5rem 0.625rem; }
+.anime-mini-title { font-size: 0.78rem; font-weight: 600; color: var(--text1); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.25rem; }
+.anime-mini-meta { font-size: 0.68rem; color: var(--text3); font-family: var(--font-mono); }
+
+/* ─── TOGGLE ─────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info {}
+.toggle-name { font-size: 0.875rem; font-weight: 600; color: var(--text1); }
+.toggle-desc { font-size: 0.78rem; color: var(--text3); margin-top: 2px; }
+
+.toggle-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  transition: var(--trans);
+  cursor: pointer;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 3px; top: 3px;
+  background: var(--text3);
+  border-radius: 50%;
+  transition: var(--trans);
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--violet); border-color: var(--violet); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: white; }
+
+/* ─── LOG ────────────────────────────────────────────────── */
+.log-list { display: flex; flex-direction: column; gap: 0; }
+
+.log-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+.log-item:last-child { border-bottom: none; }
+
+.log-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.log-dot.login    { background: var(--green); }
+.log-dot.thumb    { background: var(--cyan); }
+.log-dot.aon      { background: var(--violet-light); }
+.log-dot.featured { background: var(--amber); }
+.log-dot.config   { background: var(--rose); }
+.log-dot.custom   { background: var(--red); }
+.log-dot.security { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.log-dot.export, .log-dot.import { background: var(--text3); }
+
+.log-msg { flex: 1; color: var(--text2); }
+.log-ts { color: var(--text3); font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+#adminToast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.admin-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  background: var(--bg4);
+  border: 1px solid var(--border-v);
+  border-radius: var(--radius);
+  font-size: 0.84rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  animation: slideIn 0.25s ease;
+  pointer-events: all;
+}
+.admin-toast.error { border-color: rgba(248,113,113,0.4); }
+.admin-toast.success { border-color: rgba(52,211,153,0.4); }
+
+@keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { to { transform: translateX(30px); opacity: 0; } }
+.admin-toast.out { animation: slideOut 0.25s ease forwards; }
+
+/* ─── SPINNER ────────────────────────────────────────────── */
+.spinner-sm {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--violet);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ─── MODAL ──────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(6,6,15,0.85);
+  backdrop-filter: blur(6px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border-v);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 0 80px rgba(0,0,0,0.6);
+  transform: translateY(10px) scale(0.97);
+  transition: transform 0.2s ease;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+.modal-head {
+  padding: 1.25rem 1.5rem 0.875rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; }
+.modal-close { width: 28px; height: 28px; border-radius: var(--radius-sm); color: var(--text3); font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: var(--trans); }
+.modal-close:hover { background: var(--bg4); color: var(--text1); }
+
+.modal-body { padding: 1.5rem; }
+.modal-foot { padding: 0 1.5rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+/* ─── IMAGE PREVIEW ──────────────────────────────────────── */
+.img-preview {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--bg0);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.img-preview img { width: 100%; height: 100%; object-fit: cover; }
+.img-preview .placeholder { color: var(--text3); font-size: 0.8rem; }
+
+/* ─── DRAG DROP ──────────────────────────────────────────── */
+.drag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  cursor: grab;
+  transition: var(--trans);
+}
+.drag-item:hover { border-color: var(--border-v); background: var(--bg4); }
+.drag-item.dragging { opacity: 0.4; border-style: dashed; }
+.drag-handle { color: var(--text3); cursor: grab; flex-shrink: 0; }
+.drag-thumb { width: 36px; height: 50px; border-radius: 4px; object-fit: cover; background: var(--bg0); flex-shrink: 0; }
+.drag-info { flex: 1; min-width: 0; }
+.drag-title { font-size: 0.84rem; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drag-meta { font-size: 0.72rem; color: var(--text3); font-family: var(--font-mono); }
+
+/* ─── SEARCH RESULTS DROPDOWN ────────────────────────────── */
+.search-results-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg4);
+  border: 1px solid var(--border-v);
+  border-radius: var(--radius);
+  overflow: hidden;
+  z-index: 200;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  display: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.search-results-drop.open { display: block; }
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  cursor: pointer;
+  transition: var(--trans);
+  border-bottom: 1px solid var(--border);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--bg3); }
+
+.search-result-thumb { width: 32px; height: 44px; border-radius: 4px; object-fit: cover; background: var(--bg0); flex-shrink: 0; }
+.search-result-title { font-size: 0.84rem; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-result-meta { font-size: 0.72rem; color: var(--text3); }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 60px; }
+  .sidebar-logo-main, .sidebar-logo-sub,
+  .nav-item span:not(.nav-icon), .nav-section-label,
+  .nav-badge, .sidebar-user-info { display: none; }
+  .nav-item { justify-content: center; padding: 0.625rem; }
+  .sidebar-user { justify-content: center; }
+  .logout-btn { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN ──────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🌸 SakuraStream</div>
+    <div class="login-sub">// panel de administrador</div>
+    <div class="login-error" id="loginError">Contraseña incorrecta</div>
+    <div class="field">
+      <label class="field-label">Contraseña</label>
+      <input type="password" class="input" id="loginPass" placeholder="••••••••" autofocus>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">
+      Entrar al panel
+    </button>
+    <p style="font-size:0.72rem;color:var(--text3);margin-top:1rem;text-align:center;font-family:var(--font-mono)">
+      Primera vez → cualquier contraseña la crea.<br>
+      Contraseña por defecto: <strong style="color:var(--violet-light)">sakura2025</strong>
+    </p>
+  </div>
+</div>
+
+<!-- ─── APP SHELL ─────────────────────────────────────────── -->
+<div id="adminApp">
+  <div class="admin-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-main">🌸 Admin</div>
+        <div class="sidebar-logo-sub">SakuraStream</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Principal</div>
+        <div class="nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </div>
+
+        <div class="nav-section-label">Contenido</div>
+        <div class="nav-item" data-panel="thumbs" onclick="switchPanel('thumbs', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Miniaturas</span>
+          <span class="nav-badge" id="badgeThumbs">0</span>
+        </div>
+        <div class="nav-item" data-panel="aon" onclick="switchPanel('aon', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>AON Slugs</span>
+          <span class="nav-badge" id="badgeAON">0</span>
+        </div>
+        <div class="nav-item" data-panel="featured" onclick="switchPanel('featured', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Destacados</span>
+          <span class="nav-badge" id="badgeFeatured">0</span>
+        </div>
+        <div class="nav-item" data-panel="custom" onclick="switchPanel('custom', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Añadir Anime</span>
+        </div>
+
+        <div class="nav-section-label">Sistema</div>
+        <div class="nav-item" data-panel="config" onclick="switchPanel('config', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M21 12h-2M5 12H3M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M12 21v-2M12 5V3"/></svg>
+          <span>Configuración</span>
+        </div>
+        <div class="nav-item" data-panel="log" onclick="switchPanel('log', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Actividad</span>
+        </div>
+        <div class="nav-item" data-panel="tools" onclick="switchPanel('tools', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span>Herramientas</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar">⚙</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name">Admin</div>
+            <div class="sidebar-user-role">sakura-admin</div>
+          </div>
+          <button class="logout-btn" onclick="doLogout()" title="Cerrar sesión">✕</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="Admin.exportData()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+          <a href="index.html" target="_blank" class="btn btn-ghost btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Ver sitio
+          </a>
+        </div>
+      </header>
+
+      <div class="page-content">
+
+        <!-- ── DASHBOARD ──────────────────────────────────── -->
+        <div class="panel active" id="panel-dashboard">
+          <div class="section-head">
+            <h2 class="section-title">Dashboard</h2>
+            <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↺ Actualizar</button>
+          </div>
+          <div class="stats-grid" id="statsGrid">
+            <!-- rendered by JS -->
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+
+            <!-- Actividad reciente -->
+            <div class="card">
+              <div class="card-head">
+                📋 Actividad reciente
+                <button class="btn btn-ghost btn-sm" onclick="switchPanel('log', document.querySelector('[data-panel=log]'))">Ver todo</button>
+              </div>
+              <div class="card-body" id="recentLog" style="padding:0"></div>
+            </div>
+
+            <!-- Accesos rápidos -->
+            <div class="card">
+              <div class="card-head">⚡ Acciones rápidas</div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:0.5rem">
+                  <button class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem" onclick="switchPanel('thumbs', document.querySelector('[data-panel=thumbs]'))">
+                    🖼 Editar miniaturas de episodios
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem" onclick="switchPanel('aon', document.querySelector('[data-panel=aon]'))">
+                    🌐 Gestionar slugs de AON
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem" onclick="switchPanel('featured', document.querySelector('[data-panel=featured]'))">
+                    ⭐ Editar anime destacados
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem" onclick="switchPanel('custom', document.querySelector('[data-panel=custom]'))">
+                    ➕ Añadir anime personalizado
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem" onclick="Admin.exportData()">
+                    💾 Exportar backup
+                  </button>
+                  <button class="btn btn-danger" style="justify-content:flex-start;gap:0.75rem" onclick="clearAPICache()">
+                    🗑 Limpiar caché de API
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── MINIATURAS DE EPISODIOS ─────────────────────── -->
+        <div class="panel" id="panel-thumbs">
+          <div class="section-head">
+            <h2 class="section-title">Miniaturas de Episodios</h2>
+          </div>
+
+          <!-- Buscar anime -->
+          <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-head">🔍 Seleccionar anime</div>
+            <div class="card-body">
+              <div style="position:relative">
+                <div class="search-wrap">
+                  <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input type="text" class="search-input" id="thumbAnimeSearch" placeholder="Buscar anime por título...">
+                </div>
+                <div class="search-results-drop" id="thumbAnimeResults"></div>
+              </div>
+              <div id="thumbSelectedAnime" style="margin-top:0.75rem"></div>
+            </div>
+          </div>
+
+          <!-- Episodios del anime seleccionado -->
+          <div id="thumbEpisodesSection" style="display:none">
+            <div class="card">
+              <div class="card-head">
+                <span id="thumbEpisodeTitle">Episodios</span>
+                <div style="display:flex;gap:0.5rem;align-items:center">
+                  <span class="badge badge-cyan" id="thumbOverrideCount"></span>
+                  <button class="btn btn-danger btn-sm" onclick="deleteAllThumbs()">Limpiar todos</button>
+                </div>
+              </div>
+              <div class="card-body" style="padding:0.875rem">
+                <!-- Paginación -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;flex-wrap:wrap;gap:0.5rem">
+                  <span id="thumbEpPageInfo" style="font-size:0.8rem;color:var(--text3);font-family:var(--font-mono)"></span>
+                  <div style="display:flex;gap:0.375rem">
+                    <button class="btn btn-ghost btn-sm" id="thumbPrevPage" onclick="thumbChangePage(-1)">← Anterior</button>
+                    <button class="btn btn-ghost btn-sm" id="thumbNextPage" onclick="thumbChangePage(1)">Siguiente →</button>
+                  </div>
+                </div>
+                <div class="thumb-grid" id="thumbGrid">
+                  <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)">
+                    <div class="spinner-sm" style="margin:0 auto 0.5rem"></div>
+                    Cargando episodios...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla de overrides -->
+          <div class="card">
+            <div class="card-head">
+              📋 Todas las sobreescrituras (<span id="thumbTotalCount">0</span>)
+              <button class="btn btn-ghost btn-sm" onclick="renderThumbsTable()">↺</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Anime ID</th>
+                    <th>Episodio</th>
+                    <th>URL personalizada</th>
+                    <th>Preview</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="thumbsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── AON SLUGS ──────────────────────────────────── -->
+        <div class="panel" id="panel-aon">
+          <div class="section-head">
+            <h2 class="section-title">AnimeonlineNinja — Slugs</h2>
+          </div>
+
+          <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-head">➕ Añadir / editar slug</div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.75rem;align-items:flex-end">
+                <div class="field" style="margin:0">
+                  <label class="field-label">Buscar anime</label>
+                  <div style="position:relative">
+                    <div class="search-wrap">
+                      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input type="text" class="search-input" id="aonAnimeSearch" placeholder="Título del anime...">
+                    </div>
+                    <div class="search-results-drop" id="aonAnimeResults"></div>
+                  </div>
+                  <input type="hidden" id="aonMalId">
+                </div>
+                <div class="field" style="margin:0">
+                  <label class="field-label">Slug en AON</label>
+                  <input type="text" class="input" id="aonSlugInput" placeholder="shingeki-no-kyojin">
+                </div>
+                <button class="btn btn-primary" onclick="saveAONSlug()" style="height:40px;align-self:flex-end">
+                  Guardar
+                </button>
+              </div>
+              <div id="aonPreviewUrl" style="margin-top:0.625rem;font-size:0.78rem;color:var(--text3);font-family:var(--font-mono)"></div>
+            </div>
+          </div>
+
+          <!-- Tabla de slugs -->
+          <div class="card">
+            <div class="card-head">
+              Lista de slugs configurados
+              <div style="display:flex;gap:0.5rem;align-items:center">
+                <span class="badge badge-violet" id="aonSlugCount">0 slugs</span>
+                <button class="btn btn-ghost btn-sm" onclick="renderAONTable()">↺</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table" id="aonTable">
+                <thead>
+                  <tr>
+                    <th>MAL ID</th>
+                    <th>Slug</th>
+                    <th>URL de ejemplo</th>
+                    <th>Verificar</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="aonTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── DESTACADOS ──────────────────────────────────── -->
+        <div class="panel" id="panel-featured">
+          <div class="section-head">
+            <h2 class="section-title">Anime Destacados</h2>
+          </div>
+
+          <!-- Añadir destacado -->
+          <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-head">➕ Añadir anime destacado</div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr auto;gap:0.75rem;align-items:flex-end">
+                <div class="field" style="margin:0">
+                  <label class="field-label">Buscar anime en MAL</label>
+                  <div style="position:relative">
+                    <div class="search-wrap">
+                      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input type="text" class="search-input" id="featAnimeSearch" placeholder="Buscar...">
+                    </div>
+                    <div class="search-results-drop" id="featAnimeResults"></div>
+                  </div>
+                </div>
+                <div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista draggable -->
+          <div class="card">
+            <div class="card-head">
+              Lista de destacados (arrastra para reordenar)
+              <span class="badge badge-amber" id="featCount">0</span>
+            </div>
+            <div class="card-body">
+              <div id="featuredList">
+                <div style="text-align:center;padding:2rem;color:var(--text3)">Sin anime destacados todavía.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ANIME PERSONALIZADO ────────────────────────── -->
+        <div class="panel" id="panel-custom">
+          <div class="section-head">
+            <h2 class="section-title">Añadir Anime Personalizado</h2>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start">
+            <!-- Formulario -->
+            <div class="card">
+              <div class="card-head" id="customFormTitle">➕ Nuevo anime</div>
+              <div class="card-body">
+                <input type="hidden" id="customId">
+                <div class="field">
+                  <label class="field-label">Título</label>
+                  <input type="text" class="input" id="customTitle" placeholder="Título del anime">
+                </div>
+                <div class="field">
+                  <label class="field-label">Título en inglés</label>
+                  <input type="text" class="input" id="customTitleEn" placeholder="English title">
+                </div>
+                <div class="field">
+                  <label class="field-label">URL del póster</label>
+                  <input type="url" class="input" id="customPoster" placeholder="https://..." oninput="previewCustomPoster()">
+                  <div class="img-preview" id="customPosterPreview" style="height:120px;margin-top:0.5rem">
+                    <span class="placeholder">Sin imagen</span>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                  <div class="field">
+                    <label class="field-label">Tipo</label>
+                    <select class="select" id="customType">
+                      <option value="TV">TV</option>
+                      <option value="Movie">Película</option>
+                      <option value="OVA">OVA</option>
+                      <option value="ONA">ONA</option>
+                      <option value="Special">Especial</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label">Año</label>
+                    <input type="number" class="input" id="customYear" placeholder="2024">
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                  <div class="field">
+                    <label class="field-label">Episodios</label>
+                    <input type="number" class="input" id="customEpisodes" placeholder="12">
+                  </div>
+                  <div class="field">
+                    <label class="field-label">Puntuación</label>
+                    <input type="number" class="input" id="customScore" placeholder="8.5" step="0.1" min="0" max="10">
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field-label">Sinopsis</label>
+                  <textarea class="textarea" id="customSynopsis" placeholder="Descripción del anime..." rows="4"></textarea>
+                </div>
+                <div class="field">
+                  <label class="field-label">Slug AON (animeonline.ninja)</label>
+                  <input type="text" class="input" id="customAONSlug" placeholder="nombre-del-anime">
+                </div>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+                  <button class="btn btn-primary" onclick="saveCustomAnime()" style="flex:1;justify-content:center">Guardar</button>
+                  <button class="btn btn-ghost" onclick="resetCustomForm()">Cancelar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de animes custom -->
+            <div class="card">
+              <div class="card-head">
+                Animes personalizados
+                <span class="badge badge-cyan" id="customCount">0</span>
+              </div>
+              <div class="card-body" style="padding:0.75rem">
+                <div id="customAnimeList">
+                  <div style="text-align:center;padding:2rem;color:var(--text3)">Sin animes personalizados.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CONFIGURACIÓN ──────────────────────────────── -->
+        <div class="panel" id="panel-config">
+          <div class="section-head">
+            <h2 class="section-title">Configuración del sitio</h2>
+            <button class="btn btn-primary" onclick="saveConfig()">Guardar cambios</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start">
+
+            <!-- Integraciones -->
+            <div class="card">
+              <div class="card-head">🔌 Integraciones</div>
+              <div class="card-body" style="padding:1rem 1.25rem">
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <div class="toggle-name">TMDB</div>
+                    <div class="toggle-desc">Miniaturas de episodios y pósters alternativos</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="cfgTmdbEnabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <div class="toggle-name">AnimeonlineNinja</div>
+                    <div class="toggle-desc">Fuente de episodios en español</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="cfgAonEnabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Branding -->
+            <div class="card">
+              <div class="card-head">🎨 Branding</div>
+              <div class="card-body">
+                <div class="field">
+                  <label class="field-label">Nombre del sitio</label>
+                  <input type="text" class="input" id="cfgSiteName" placeholder="SakuraStream">
+                </div>
+                <div class="field">
+                  <label class="field-label">Tagline</label>
+                  <input type="text" class="input" id="cfgTagline" placeholder="Tu universo anime...">
+                </div>
+              </div>
+            </div>
+
+            <!-- API Keys -->
+            <div class="card">
+              <div class="card-head">🔑 API Keys</div>
+              <div class="card-body">
+                <div class="field">
+                  <label class="field-label">TMDB API Key</label>
+                  <input type="text" class="input" id="cfgTmdbKey" placeholder="xxxxxxxxxxxxxxxx" style="font-family:var(--font-mono);font-size:0.8rem">
+                </div>
+                <div class="field">
+                  <label class="field-label">Proxy CORS</label>
+                  <input type="text" class="input" id="cfgCorsProxy" placeholder="https://corsproxy.io/?">
+                </div>
+              </div>
+            </div>
+
+            <!-- Rendimiento -->
+            <div class="card">
+              <div class="card-head">⚡ Rendimiento</div>
+              <div class="card-body">
+                <div class="field">
+                  <label class="field-label">Delay entre requests Jikan (ms)</label>
+                  <input type="number" class="input" id="cfgJikanDelay" placeholder="400" min="300" max="2000">
+                </div>
+                <div class="field">
+                  <label class="field-label">Expiración de caché (minutos)</label>
+                  <input type="number" class="input" id="cfgCacheExpiry" placeholder="15" min="1" max="120">
+                </div>
+                <div class="field">
+                  <label class="field-label">Resultados por página</label>
+                  <input type="number" class="input" id="cfgPageSize" placeholder="24" min="6" max="48">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Cambiar contraseña -->
+          <div class="card" style="margin-top:1.25rem">
+            <div class="card-head">🔐 Cambiar contraseña</div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.75rem;align-items:flex-end">
+                <div class="field" style="margin:0">
+                  <label class="field-label">Contraseña actual</label>
+                  <input type="password" class="input" id="cfgOldPass">
+                </div>
+                <div class="field" style="margin:0">
+                  <label class="field-label">Nueva contraseña</label>
+                  <input type="password" class="input" id="cfgNewPass">
+                </div>
+                <button class="btn btn-ghost" onclick="changePassword()">Cambiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── LOG DE ACTIVIDAD ────────────────────────────── -->
+        <div class="panel" id="panel-log">
+          <div class="section-head">
+            <h2 class="section-title">Historial de actividad</h2>
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('¿Limpiar el log?')){localStorage.removeItem('ss_admin_log');renderLog()}">Limpiar</button>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:0.5rem 1rem">
+              <div class="log-list" id="logList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── HERRAMIENTAS ────────────────────────────────── -->
+        <div class="panel" id="panel-tools">
+          <div class="section-head">
+            <h2 class="section-title">Herramientas del sistema</h2>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+
+            <div class="card">
+              <div class="card-head">💾 Backup de datos</div>
+              <div class="card-body">
+                <p style="font-size:0.84rem;color:var(--text2);margin-bottom:1rem">
+                  Exporta todas las miniaturas personalizadas, slugs de AON, anime destacados y configuración en un archivo JSON.
+                </p>
+                <button class="btn btn-primary" onclick="Admin.exportData()" style="width:100%;justify-content:center;margin-bottom:0.5rem">
+                  ⬇ Exportar backup (.json)
+                </button>
+                <div style="position:relative">
+                  <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="document.getElementById('importFile').click()">
+                    ⬆ Importar backup
+                  </button>
+                  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackup(this)">
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">🗑 Limpiar datos</div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:0.5rem">
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="clearCache('api')">
+                    Limpiar caché de API (sessionStorage)
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="clearCache('tmdb')">
+                    Limpiar caché de TMDB
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="clearCache('history')">
+                    Limpiar historial de usuarios
+                  </button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="clearCache('favorites')">
+                    Limpiar favoritos
+                  </button>
+                  <hr style="border-color:var(--border);margin:0.25rem 0">
+                  <button class="btn btn-danger" style="justify-content:flex-start" onclick="confirmResetAdmin()">
+                    ⚠ Resetear todos los datos de admin
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">📊 Uso de almacenamiento</div>
+              <div class="card-body">
+                <div id="storageBreakdown" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">🔍 Buscar anime en MAL</div>
+              <div class="card-body">
+                <div class="field">
+                  <label class="field-label">Buscar por título</label>
+                  <div class="input-group">
+                    <input type="text" class="input" id="toolsSearch" placeholder="Naruto, One Piece...">
+                    <button class="btn btn-primary" onclick="toolsSearchAnime()">Buscar</button>
+                  </div>
+                </div>
+                <div id="toolsResults" style="margin-top:0.75rem"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /page-content -->
+    </div><!-- /main-content -->
+  </div><!-- /admin-shell -->
+</div><!-- /adminApp -->
+
+<!-- ─── MODAL: EDITAR MINIATURA ───────────────────────────── -->
+<div class="modal-overlay" id="modalThumb">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalThumbTitle">Editar miniatura</div>
+      <button class="modal-close" onclick="closeModal('modalThumb')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modalThumbEp">
+      <div class="field">
+        <label class="field-label">URL de la imagen</label>
+        <input type="url" class="input" id="modalThumbUrl"
+          placeholder="https://image.tmdb.org/t/p/w400/..."
+          oninput="previewThumbModal()">
+      </div>
+      <div class="img-preview" id="modalThumbPreview">
+        <span class="placeholder">Pega una URL para previsualizar</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text3);margin-top:0.75rem">
+        💡 Puedes usar URLs de TMDB, o cualquier imagen accesible. Recomendado: 400×225px (16:9)
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="modalThumbDelete" onclick="deleteThumb()">Eliminar</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalThumb')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveThumb()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOASTS ─────────────────────────────────────────────── -->
+<div id="adminToast"></div>
+
+<!-- ─── SCRIPTS ────────────────────────────────────────────── -->
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tmdb.js"></script>
+<script src="js/admin.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  ESTADO GLOBAL DEL PANEL
+// ═══════════════════════════════════════════════════════════
+let _currentPanel    = 'dashboard';
+let _thumbAnime      = null;  // anime seleccionado en thumbs
+let _thumbPage       = 1;
+let _thumbEpisodes   = [];
+let _aonSelectedId   = null;
+const THUMBS_PER_PAGE = 20;
+
+// ═══════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════
+async function doLogin() {
+  const pass = document.getElementById('loginPass').value;
+  if (!pass) return;
+  const ok = await Admin.login(pass);
+  if (ok) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display    = 'block';
+    initAdmin();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+  }
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+  Admin.logout();
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminApp').style.display    = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+function initAdmin() {
+  Admin.applyConfigOverrides?.();
+  loadDashboard();
+  updateBadges();
+  loadConfig();
+  renderLog();
+
+  // Bind search inputs
+  bindAnimeSearch('thumbAnimeSearch', 'thumbAnimeResults', onThumbAnimeSelect);
+  bindAnimeSearch('aonAnimeSearch',   'aonAnimeResults',   onAONAnimeSelect);
+  bindAnimeSearch('featAnimeSearch',  'featAnimeResults',  onFeatAnimeSelect);
+
+  // AON slug input preview
+  document.getElementById('aonSlugInput')?.addEventListener('input', updateAONPreview);
+  document.getElementById('aonMalId')?.addEventListener('change', updateAONPreview);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════
+function switchPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${name}`)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  _currentPanel = name;
+
+  const titles = {
+    dashboard: 'Dashboard',
+    thumbs:    'Miniaturas de Episodios',
+    aon:       'AnimeonlineNinja — Slugs',
+    featured:  'Anime Destacados',
+    custom:    'Añadir Anime Personalizado',
+    config:    'Configuración',
+    log:       'Historial de Actividad',
+    tools:     'Herramientas del Sistema',
+  };
+  document.getElementById('topbarTitle').textContent = titles[name] || name;
+
+  if (name === 'thumbs')    renderThumbsTable();
+  if (name === 'aon')       renderAONTable();
+  if (name === 'featured')  renderFeatured();
+  if (name === 'custom')    renderCustomList();
+  if (name === 'log')       renderLog();
+  if (name === 'tools')     renderStorageBreakdown();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  const container = document.getElementById('adminToast');
+  const el = document.createElement('div');
+  el.className = `admin-toast ${type}`;
+  el.innerHTML = `<span>${icons[type] || icons.info}</span><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function loadDashboard() {
+  const s = Admin.getStats();
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = [
+    { label: 'Favoritos',         val: s.favorites,     sub: 'usuarios', icon: '♥',  cls: '' },
+    { label: 'Historial',         val: s.history,       sub: 'entradas', icon: '🕐', cls: '' },
+    { label: 'Miniaturas',        val: s.thumbOverrides, sub: 'sobreescritas', icon: '🖼', cls: 'accent' },
+    { label: 'Slugs AON',         val: s.aonSlugs,      sub: 'configurados', icon: '🌐', cls: 'accent' },
+    { label: 'Anime custom',      val: s.customAnime,   sub: 'añadidos', icon: '➕', cls: '' },
+    { label: 'Destacados',        val: s.featured,      sub: 'animados', icon: '⭐', cls: '' },
+    { label: 'LocalStorage',      val: s.lsSizeKB,      sub: 'KB usados', icon: '💾', cls: '' },
+    { label: 'Viendo ahora',      val: s.watching,      sub: 'en progreso', icon: '▶', cls: '' },
+  ].map(item => `
+    <div class="stat-card">
+      <div class="stat-icon">${item.icon}</div>
+      <div class="stat-label">${item.label}</div>
+      <div class="stat-val ${item.cls}">${item.val}</div>
+      <div class="stat-sub">${item.sub}</div>
+    </div>
+  `).join('');
+
+  // Recent log
+  const log  = Admin.getLog().slice(0, 5);
+  const logEl = document.getElementById('recentLog');
+  if (logEl) {
+    if (!log.length) {
+      logEl.innerHTML = '<div style="padding:1.25rem;text-align:center;color:var(--text3);font-size:0.84rem">Sin actividad todavía</div>';
+    } else {
+      logEl.innerHTML = '<div class="log-list" style="padding:0 1rem">' + log.map(renderLogItem).join('') + '</div>';
+    }
+  }
+}
+
+function updateBadges() {
+  const s = Admin.getStats();
+  document.getElementById('badgeThumbs').textContent  = s.thumbOverrides;
+  document.getElementById('badgeAON').textContent     = s.aonSlugs;
+  document.getElementById('badgeFeatured').textContent = s.featured;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BÚSQUEDA DE ANIME (reutilizable)
+// ═══════════════════════════════════════════════════════════
+function bindAnimeSearch(inputId, dropId, onSelect) {
+  const input = document.getElementById(inputId);
+  const drop  = document.getElementById(dropId);
+  if (!input || !drop) return;
+
+  let timer;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 2) { drop.classList.remove('open'); return; }
+    timer = setTimeout(async () => {
+      drop.innerHTML = '<div class="search-result-item"><div class="spinner-sm"></div></div>';
+      drop.classList.add('open');
+      try {
+        const data    = await API.searchAnime({ q, page: 1 });
+        const results = data.data?.slice(0, 8) || [];
+        if (!results.length) {
+          drop.innerHTML = '<div class="search-result-item" style="color:var(--text3)">Sin resultados</div>';
+          return;
+        }
+        drop.innerHTML = results.map(a => `
+          <div class="search-result-item" onclick="_selectAnime('${inputId}','${dropId}',${a.mal_id},'${(a.title||'').replace(/'/g,"\\'")}','${(API.getPoster(a)||'').replace(/'/g,"\\'")}',${a.score||0},${a.episodes||0},'${(a.title_english||'').replace(/'/g,"\\'")}')">
+            <img class="search-result-thumb" src="${API.getPoster(a)}" onerror="this.src='assets/placeholder.jpg'">
+            <div>
+              <div class="search-result-title">${escHtml(a.title)}</div>
+              <div class="search-result-meta">${a.type||''} · ${a.year||'N/A'}${a.score ? ' · ★'+a.score.toFixed(1) : ''}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch {
+        drop.innerHTML = '<div class="search-result-item" style="color:var(--text3)">Error al buscar</div>';
+      }
+    }, 400);
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('open');
+  });
+
+  // Guardar callback en el elemento
+  drop._onSelect = onSelect;
+}
+
+function _selectAnime(inputId, dropId, malId, title, image, score, episodes, titleEn) {
+  const input = document.getElementById(inputId);
+  const drop  = document.getElementById(dropId);
+  if (input) input.value = title;
+  if (drop) drop.classList.remove('open');
+  const cb = document.getElementById(dropId)._onSelect;
+  if (cb) cb({ mal_id: malId, title, image, score, episodes, title_english: titleEn });
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  THUMBS — Miniaturas de episodios
+// ═══════════════════════════════════════════════════════════
+function onThumbAnimeSelect(anime) {
+  _thumbAnime = anime;
+  _thumbPage  = 1;
+
+  const infoEl = document.getElementById('thumbSelectedAnime');
+  infoEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border-v)">
+      <img src="${anime.image}" style="width:40px;height:56px;border-radius:4px;object-fit:cover;background:var(--bg0)" onerror="this.src='assets/placeholder.jpg'">
+      <div>
+        <div style="font-size:0.875rem;font-weight:600;color:var(--text1)">${escHtml(anime.title)}</div>
+        <div style="font-size:0.75rem;color:var(--text3);font-family:var(--font-mono)">MAL ID: ${anime.mal_id} · ${anime.episodes||'?'} eps</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="clearThumbAnimeSelection()">✕ Cambiar</button>
+    </div>
+  `;
+
+  document.getElementById('thumbEpisodesSection').style.display = 'block';
+  document.getElementById('thumbEpisodeTitle').textContent = `Episodios de "${anime.title}"`;
+  loadThumbEpisodes();
+  renderThumbsTable();
+}
+
+function clearThumbAnimeSelection() {
+  _thumbAnime = null;
+  document.getElementById('thumbSelectedAnime').innerHTML = '';
+  document.getElementById('thumbEpisodesSection').style.display = 'none';
+  document.getElementById('thumbAnimeSearch').value = '';
+}
+
+async function loadThumbEpisodes() {
+  if (!_thumbAnime) return;
+  const grid = document.getElementById('thumbGrid');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)"><div class="spinner-sm" style="margin:0 auto 0.5rem"></div>Cargando...</div>';
+
+  try {
+    let all = [];
+    let page = 1, hasMore = true;
+    while (hasMore && page <= 5) {
+      const data = await API.getAnimeEpisodes(_thumbAnime.mal_id, page);
+      all = [...all, ...(data.data || [])];
+      hasMore = !!data.pagination?.has_next_page;
+      page++;
+    }
+    _thumbEpisodes = all;
+    renderThumbEpisodesGrid();
+  } catch {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--rose)">Error al cargar episodios</div>';
+  }
+}
+
+function renderThumbEpisodesGrid() {
+  if (!_thumbAnime || !_thumbEpisodes.length) return;
+  const total  = _thumbEpisodes.length;
+  const start  = (_thumbPage - 1) * THUMBS_PER_PAGE;
+  const slice  = _thumbEpisodes.slice(start, start + THUMBS_PER_PAGE);
+  const thumbs = Admin.getThumbsForAnime(_thumbAnime.mal_id);
+  const overrideCnt = Object.keys(thumbs).length;
+
+  document.getElementById('thumbOverrideCount').textContent = `${overrideCnt} sobreescritas`;
+  document.getElementById('thumbEpPageInfo').textContent =
+    `Página ${_thumbPage} de ${Math.ceil(total / THUMBS_PER_PAGE)} · ${total} episodios`;
+  document.getElementById('thumbPrevPage').disabled = _thumbPage <= 1;
+  document.getElementById('thumbNextPage').disabled = start + THUMBS_PER_PAGE >= total;
+
+  const grid = document.getElementById('thumbGrid');
+  grid.innerHTML = slice.map(ep => {
+    const epNum    = ep.mal_id || ep.episode_id;
+    const override = thumbs[epNum];
+    const malThumb = ep.images?.jpg?.image_url || '';
+    const src      = override || malThumb || 'assets/ep-placeholder.jpg';
+    return `
+      <div class="thumb-item${override ? ' overridden' : ''}">
+        <div class="thumb-img-wrap">
+          <img src="${src}" onerror="this.src='assets/ep-placeholder.jpg'" loading="lazy">
+          <div class="thumb-badge">${epNum}</div>
+          ${override ? '<div class="thumb-override-badge">✓</div>' : ''}
+        </div>
+        <div class="thumb-body">
+          <div class="thumb-ep">Episodio ${epNum}</div>
+          <div class="thumb-title">${escHtml(ep.title || `Episodio ${epNum}`)}</div>
+          <div class="thumb-actions">
+            <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="openThumbModal(${epNum},'${escHtml(ep.title||'Ep '+epNum)}','${(override||malThumb).replace(/'/g,"\\'")}')"
+            >✏️ Editar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function thumbChangePage(dir) {
+  const maxPage = Math.ceil(_thumbEpisodes.length / THUMBS_PER_PAGE);
+  _thumbPage = Math.max(1, Math.min(maxPage, _thumbPage + dir));
+  renderThumbEpisodesGrid();
+}
+
+function renderThumbsTable() {
+  const thumbs = Admin.getThumbs();
+  const entries = Object.entries(thumbs);
+  const tbody = document.getElementById('thumbsTableBody');
+  document.getElementById('thumbTotalCount').textContent = entries.length;
+
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:1.5rem">Sin sobreescrituras</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(([key, url]) => {
+    const [malId, epNum] = key.split(':');
+    return `
+      <tr>
+        <td><span class="mono">${malId}</span></td>
+        <td><span class="mono">EP ${epNum}</span></td>
+        <td style="max-width:220px">
+          <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-mono);font-size:0.72rem;color:var(--text2)" title="${escHtml(url)}">${escHtml(url)}</div>
+        </td>
+        <td>
+          <img src="${url}" style="width:64px;height:36px;object-fit:cover;border-radius:4px;background:var(--bg0)" onerror="this.style.opacity=0.3">
+        </td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteThumbDirect('${malId}','${epNum}')">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Modal de edición de miniatura
+let _modalThumbEpNum = null;
+function openThumbModal(epNum, title, currentUrl) {
+  _modalThumbEpNum = epNum;
+  document.getElementById('modalThumbTitle').textContent = `Miniatura — ${title}`;
+  document.getElementById('modalThumbEp').value  = epNum;
+  document.getElementById('modalThumbUrl').value = Admin.getThumb(_thumbAnime?.mal_id, epNum) || currentUrl || '';
+  previewThumbModal();
+  openModal('modalThumb');
+}
+
+function previewThumbModal() {
+  const url = document.getElementById('modalThumbUrl').value.trim();
+  const pre = document.getElementById('modalThumbPreview');
+  if (url) {
+    pre.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='<span class=placeholder>URL inválida o no accesible</span>'">`;
+  } else {
+    pre.innerHTML = '<span class="placeholder">Pega una URL para previsualizar</span>';
+  }
+}
+
+function saveThumb() {
+  if (!_thumbAnime || _modalThumbEpNum == null) return;
+  const url = document.getElementById('modalThumbUrl').value.trim();
+  Admin.setThumb(_thumbAnime.mal_id, _modalThumbEpNum, url);
+  closeModal('modalThumb');
+  renderThumbEpisodesGrid();
+  renderThumbsTable();
+  updateBadges();
+  toast('Miniatura guardada', 'success');
+}
+
+function deleteThumb() {
+  if (!_thumbAnime || _modalThumbEpNum == null) return;
+  Admin.setThumb(_thumbAnime.mal_id, _modalThumbEpNum, null);
+  closeModal('modalThumb');
+  renderThumbEpisodesGrid();
+  renderThumbsTable();
+  updateBadges();
+  toast('Miniatura eliminada', 'info');
+}
+
+function deleteThumbDirect(malId, epNum) {
+  Admin.setThumb(parseInt(malId), parseInt(epNum), null);
+  renderThumbsTable();
+  if (_thumbAnime?.mal_id == malId) renderThumbEpisodesGrid();
+  updateBadges();
+  toast('Miniatura eliminada', 'info');
+}
+
+function deleteAllThumbs() {
+  if (!_thumbAnime) return;
+  if (!confirm(`¿Eliminar TODAS las miniaturas personalizadas de "${_thumbAnime.title}"?`)) return;
+  const n = Admin.deleteAllThumbsForAnime(_thumbAnime.mal_id);
+  renderThumbEpisodesGrid();
+  renderThumbsTable();
+  updateBadges();
+  toast(`${n} miniaturas eliminadas`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AON SLUGS
+// ═══════════════════════════════════════════════════════════
+function onAONAnimeSelect(anime) {
+  _aonSelectedId = anime.mal_id;
+  document.getElementById('aonMalId').value = anime.mal_id;
+  // Precargar el slug existente si hay
+  const existing = Admin.getAONSlugs()[String(anime.mal_id)];
+  if (existing) document.getElementById('aonSlugInput').value = existing;
+  updateAONPreview();
+}
+
+function updateAONPreview() {
+  const malId = document.getElementById('aonMalId').value;
+  const slug  = document.getElementById('aonSlugInput').value.trim();
+  const pre   = document.getElementById('aonPreviewUrl');
+  if (slug) {
+    pre.textContent = `→ ${CONFIG.aonBase}/episodio/${slug}-1/`;
+  } else {
+    pre.textContent = '';
+  }
+}
+
+function saveAONSlug() {
+  const malId = document.getElementById('aonMalId').value;
+  const slug  = document.getElementById('aonSlugInput').value.trim();
+  if (!malId || !slug) { toast('Selecciona un anime y escribe un slug', 'error'); return; }
+  Admin.setAONSlug(parseInt(malId), slug);
+  renderAONTable();
+  updateBadges();
+  toast('Slug guardado', 'success');
+  document.getElementById('aonAnimeSearch').value = '';
+  document.getElementById('aonSlugInput').value   = '';
+  document.getElementById('aonMalId').value       = '';
+  document.getElementById('aonPreviewUrl').textContent = '';
+  _aonSelectedId = null;
+}
+
+function renderAONTable() {
+  const slugs   = Admin.getAONSlugs();
+  const entries = Object.entries(slugs);
+  const tbody   = document.getElementById('aonTableBody');
+  document.getElementById('aonSlugCount').textContent = `${entries.length} slugs`;
+
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:1.5rem">Sin slugs configurados</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(([malId, slug]) => `
+    <tr>
+      <td><span class="mono">${malId}</span></td>
+      <td><span class="mono" style="color:var(--violet-light)">${escHtml(slug)}</span></td>
+      <td style="max-width:200px">
+        <span style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">
+          ${CONFIG.aonBase}/episodio/${escHtml(slug)}-1/
+        </span>
+      </td>
+      <td>
+        <a href="${CONFIG.aonBase}/episodio/${slug}-1/" target="_blank" class="btn btn-cyan btn-sm">↗ Abrir</a>
+      </td>
+      <td style="display:flex;gap:0.35rem">
+        <button class="btn btn-ghost btn-sm" onclick="editAONSlug('${malId}','${escHtml(slug)}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAONSlug('${malId}')">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function editAONSlug(malId, slug) {
+  document.getElementById('aonMalId').value = malId;
+  document.getElementById('aonSlugInput').value = slug;
+  document.getElementById('aonAnimeSearch').value = `ID: ${malId}`;
+  updateAONPreview();
+  document.getElementById('aonSlugInput').focus();
+}
+
+function deleteAONSlug(malId) {
+  if (!confirm('¿Eliminar este slug?')) return;
+  Admin.removeAONSlug(parseInt(malId));
+  renderAONTable();
+  updateBadges();
+  toast('Slug eliminado', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DESTACADOS
+// ═══════════════════════════════════════════════════════════
+function onFeatAnimeSelect(anime) {
+  const ok = Admin.addFeatured({
+    mal_id: anime.mal_id,
+    title:  anime.title,
+    image:  anime.image,
+    score:  anime.score,
+  });
+  if (!ok) { toast('Ya está en destacados', 'error'); return; }
+  renderFeatured();
+  updateBadges();
+  toast(`"${anime.title}" añadido a destacados`, 'success');
+  document.getElementById('featAnimeSearch').value = '';
+}
+
+function renderFeatured() {
+  const list  = Admin.getFeatured();
+  const el    = document.getElementById('featuredList');
+  const count = document.getElementById('featCount');
+  if (count) count.textContent = list.length;
+
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Sin anime destacados todavía.</div>';
+    return;
+  }
+
+  el.innerHTML = list.map((a, i) => `
+    <div class="drag-item" draggable="true"
+         ondragstart="dragStart(event,${i})" ondragover="dragOver(event)" ondrop="dragDrop(event,${i})">
+      <span class="drag-handle">⠿</span>
+      <img class="drag-thumb" src="${a.image}" onerror="this.src='assets/placeholder.jpg'">
+      <div class="drag-info">
+        <div class="drag-title">${escHtml(a.title)}</div>
+        <div class="drag-meta">ID: ${a.mal_id} · ${a.reason || ''}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeFeatured(${a.mal_id})">✕</button>
+    </div>
+  `).join('');
+}
+
+let _dragFrom = null;
+function dragStart(e, idx) { _dragFrom = idx; e.currentTarget.classList.add('dragging'); }
+function dragOver(e) { e.preventDefault(); }
+function dragDrop(e, toIdx) {
+  e.preventDefault();
+  document.querySelectorAll('.drag-item').forEach(el => el.classList.remove('dragging'));
+  if (_dragFrom === null || _dragFrom === toIdx) return;
+  Admin.reorderFeatured(_dragFrom, toIdx);
+  renderFeatured();
+  _dragFrom = null;
+}
+
+function removeFeatured(malId) {
+  Admin.removeFeatured(malId);
+  renderFeatured();
+  updateBadges();
+  toast('Eliminado de destacados', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ANIME PERSONALIZADO
+// ═══════════════════════════════════════════════════════════
+function previewCustomPoster() {
+  const url = document.getElementById('customPoster').value.trim();
+  const pre = document.getElementById('customPosterPreview');
+  if (url) {
+    pre.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='<span class=placeholder>URL inválida</span>'" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    pre.innerHTML = '<span class="placeholder">Sin imagen</span>';
+  }
+}
+
+function saveCustomAnime() {
+  const title = document.getElementById('customTitle').value.trim();
+  if (!title) { toast('El título es obligatorio', 'error'); return; }
+
+  const id = document.getElementById('customId').value || `custom_${Date.now()}`;
+  const anime = {
+    id,
+    title,
+    title_english: document.getElementById('customTitleEn').value.trim(),
+    image:    document.getElementById('customPoster').value.trim(),
+    type:     document.getElementById('customType').value,
+    year:     parseInt(document.getElementById('customYear').value) || null,
+    episodes: parseInt(document.getElementById('customEpisodes').value) || null,
+    score:    parseFloat(document.getElementById('customScore').value) || null,
+    synopsis: document.getElementById('customSynopsis').value.trim(),
+    aonSlug:  document.getElementById('customAONSlug').value.trim(),
+    isCustom: true,
+    ts:       Date.now(),
+  };
+
+  Admin.saveCustomAnime(anime);
+
+  // Si tiene slug de AON, guardarlo también en el sistema de slugs
+  if (anime.aonSlug && id.startsWith('custom_')) {
+    // No tiene mal_id real, usar el id custom
+  }
+
+  resetCustomForm();
+  renderCustomList();
+  updateBadges();
+  toast('Anime guardado', 'success');
+}
+
+function resetCustomForm() {
+  ['customId','customTitle','customTitleEn','customPoster','customYear',
+   'customEpisodes','customScore','customSynopsis','customAONSlug'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('customType').value = 'TV';
+  document.getElementById('customPosterPreview').innerHTML = '<span class="placeholder">Sin imagen</span>';
+  document.getElementById('customFormTitle').textContent = '➕ Nuevo anime';
+}
+
+function editCustomAnime(id) {
+  const anime = Admin.getCustomAnime().find(a => a.id === id);
+  if (!anime) return;
+  document.getElementById('customId').value        = anime.id;
+  document.getElementById('customTitle').value     = anime.title || '';
+  document.getElementById('customTitleEn').value   = anime.title_english || '';
+  document.getElementById('customPoster').value    = anime.image || '';
+  document.getElementById('customType').value      = anime.type || 'TV';
+  document.getElementById('customYear').value      = anime.year || '';
+  document.getElementById('customEpisodes').value  = anime.episodes || '';
+  document.getElementById('customScore').value     = anime.score || '';
+  document.getElementById('customSynopsis').value  = anime.synopsis || '';
+  document.getElementById('customAONSlug').value   = anime.aonSlug || '';
+  previewCustomPoster();
+  document.getElementById('customFormTitle').textContent = '✏️ Editar anime';
+  document.getElementById('customTitle').focus();
+}
+
+function renderCustomList() {
+  const list = Admin.getCustomAnime();
+  const el   = document.getElementById('customAnimeList');
+  const cnt  = document.getElementById('customCount');
+  if (cnt) cnt.textContent = list.length;
+
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Sin animes personalizados.</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(a => `
+    <div style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem;border-bottom:1px solid var(--border)">
+      <img src="${a.image||'assets/placeholder.jpg'}" style="width:32px;height:44px;border-radius:4px;object-fit:cover;background:var(--bg0);flex-shrink:0" onerror="this.src='assets/placeholder.jpg'">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(a.title)}</div>
+        <div style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono)">${a.type||''} · ${a.year||''} · ${a.episodes||'?'} eps</div>
+      </div>
+      <div style="display:flex;gap:0.25rem;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="editCustomAnime('${a.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCustom('${a.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteCustom(id) {
+  if (!confirm('¿Eliminar este anime?')) return;
+  Admin.deleteCustomAnime(id);
+  renderCustomList();
+  updateBadges();
+  toast('Eliminado', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONFIGURACIÓN
+// ═══════════════════════════════════════════════════════════
+function loadConfig() {
+  const cfg = Admin.getConfig();
+  document.getElementById('cfgTmdbEnabled').checked = cfg.tmdbEnabled ?? CONFIG.tmdbEnabled ?? true;
+  document.getElementById('cfgAonEnabled').checked  = cfg.aonEnabled  ?? CONFIG.aonEnabled  ?? true;
+  document.getElementById('cfgSiteName').value      = cfg.siteName  || CONFIG.siteName  || '';
+  document.getElementById('cfgTagline').value       = cfg.siteTagline || CONFIG.siteTagline || '';
+  document.getElementById('cfgTmdbKey').value       = cfg.tmdbKey   || CONFIG.tmdbKey   || '';
+  document.getElementById('cfgCorsProxy').value     = cfg.corsProxy  || CONFIG.corsProxy  || '';
+  document.getElementById('cfgJikanDelay').value    = cfg.jikanDelay || CONFIG.jikanDelay || 400;
+  document.getElementById('cfgCacheExpiry').value   = cfg.cacheExpiry ? Math.round(cfg.cacheExpiry / 60000) : 15;
+  document.getElementById('cfgPageSize').value      = cfg.pageSize   || CONFIG.pageSize   || 24;
+}
+
+function saveConfig() {
+  const overrides = {
+    tmdbEnabled:  document.getElementById('cfgTmdbEnabled').checked,
+    aonEnabled:   document.getElementById('cfgAonEnabled').checked,
+    siteName:     document.getElementById('cfgSiteName').value.trim(),
+    siteTagline:  document.getElementById('cfgTagline').value.trim(),
+    tmdbKey:      document.getElementById('cfgTmdbKey').value.trim(),
+    corsProxy:    document.getElementById('cfgCorsProxy').value.trim(),
+    jikanDelay:   parseInt(document.getElementById('cfgJikanDelay').value) || 400,
+    cacheExpiry:  (parseInt(document.getElementById('cfgCacheExpiry').value) || 15) * 60000,
+    pageSize:     parseInt(document.getElementById('cfgPageSize').value) || 24,
+  };
+
+  Admin.saveConfig(overrides);
+  Admin.applyConfigOverrides?.();
+  toast('Configuración guardada', 'success');
+}
+
+async function changePassword() {
+  const oldPass = document.getElementById('cfgOldPass').value;
+  const newPass = document.getElementById('cfgNewPass').value;
+  if (!oldPass || !newPass) { toast('Completa ambos campos', 'error'); return; }
+  if (newPass.length < 6)   { toast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
+  const ok = await Admin.changePassword(oldPass, newPass);
+  if (ok) {
+    document.getElementById('cfgOldPass').value = '';
+    document.getElementById('cfgNewPass').value = '';
+    toast('Contraseña actualizada', 'success');
+  } else {
+    toast('Contraseña actual incorrecta', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOG DE ACTIVIDAD
+// ═══════════════════════════════════════════════════════════
+function renderLogItem(entry) {
+  return `
+    <div class="log-item">
+      <div class="log-dot ${entry.type}"></div>
+      <div class="log-msg">${escHtml(entry.msg)}</div>
+      <div class="log-ts">${Admin.formatDate(entry.ts)}</div>
+    </div>
+  `;
+}
+
+function renderLog() {
+  const log = Admin.getLog();
+  const el  = document.getElementById('logList');
+  if (!el) return;
+  if (!log.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Sin actividad registrada</div>';
+    return;
+  }
+  el.innerHTML = log.map(renderLogItem).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HERRAMIENTAS
+// ═══════════════════════════════════════════════════════════
+function clearCache(type) {
+  switch (type) {
+    case 'api':
+      let n = 0;
+      for (const k of Object.keys(sessionStorage)) {
+        if (k.startsWith('api_') || k.startsWith('tmdb_')) { sessionStorage.removeItem(k); n++; }
+      }
+      toast(`Caché de API limpiada (${n} entradas)`, 'success');
+      break;
+    case 'tmdb':
+      let t = 0;
+      for (const k of Object.keys(sessionStorage)) {
+        if (k.startsWith('tmdb_')) { sessionStorage.removeItem(k); t++; }
+      }
+      toast(`Caché TMDB limpiada (${t} entradas)`, 'success');
+      break;
+    case 'history':
+      if (!confirm('¿Limpiar el historial de reproducción?')) return;
+      localStorage.removeItem('ss_history');
+      localStorage.removeItem('ss_watching');
+      toast('Historial limpiado', 'success');
+      break;
+    case 'favorites':
+      if (!confirm('¿Limpiar TODOS los favoritos?')) return;
+      localStorage.removeItem('ss_favorites');
+      toast('Favoritos limpiados', 'success');
+      break;
+  }
+  renderStorageBreakdown();
+  loadDashboard();
+}
+
+function clearAPICache() { clearCache('api'); }
+
+function renderStorageBreakdown() {
+  const el = document.getElementById('storageBreakdown');
+  if (!el) return;
+
+  const interesting = [
+    { key: 'ss_favorites',     label: '♥ Favoritos' },
+    { key: 'ss_history',       label: '🕐 Historial' },
+    { key: 'ss_watching',      label: '▶ En progreso' },
+    { key: 'ss_admin_thumbs',  label: '🖼 Miniaturas admin' },
+    { key: 'ss_aon_slugs',     label: '🌐 Slugs AON' },
+    { key: 'ss_admin_featured',label: '⭐ Destacados' },
+    { key: 'ss_admin_custom',  label: '➕ Anime custom' },
+    { key: 'ss_admin_config',  label: '⚙ Config admin' },
+    { key: 'ss_admin_log',     label: '📋 Log de admin' },
+  ];
+
+  el.innerHTML = interesting.map(({ key, label }) => {
+    const raw  = localStorage.getItem(key) || '';
+    const kb   = (raw.length / 1024).toFixed(1);
+    const pct  = Math.min(100, raw.length / 1024 / 50 * 100); // max 50KB visual
+    return `
+      <div style="margin-bottom:0.625rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px">
+          <span style="color:var(--text2)">${label}</span>
+          <span style="color:var(--text3);font-family:var(--font-mono)">${kb} KB</span>
+        </div>
+        <div style="height:4px;background:var(--bg4);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:99px;transition:width 0.4s"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toolsSearchAnime() {
+  const q   = document.getElementById('toolsSearch').value.trim();
+  const el  = document.getElementById('toolsResults');
+  if (!q) return;
+
+  el.innerHTML = '<div style="text-align:center;padding:1rem"><div class="spinner-sm" style="margin:0 auto"></div></div>';
+  try {
+    const data    = await API.searchAnime({ q, page: 1 });
+    const results = data.data?.slice(0, 12) || [];
+    if (!results.length) { el.innerHTML = '<p style="color:var(--text3);font-size:0.84rem">Sin resultados</p>'; return; }
+    el.innerHTML = `
+      <div class="anime-mini-grid">
+        ${results.map(a => `
+          <div class="anime-mini">
+            <div class="anime-mini-thumb">
+              <img src="${API.getPoster(a)}" loading="lazy" onerror="this.src='assets/placeholder.jpg'">
+            </div>
+            <div class="anime-mini-body">
+              <div class="anime-mini-title">${escHtml(a.title)}</div>
+              <div class="anime-mini-meta">ID: ${a.mal_id} · ${a.type||''}</div>
+              <div style="display:flex;gap:0.25rem;margin-top:0.375rem;flex-wrap:wrap">
+                <a href="anime.html?id=${a.mal_id}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:0.68rem;padding:2px 6px">Ver</a>
+                <button class="btn btn-cyan btn-sm" style="font-size:0.68rem;padding:2px 6px" onclick="switchPanel('aon',document.querySelector('[data-panel=aon]'));document.getElementById('aonAnimeSearch').value='${escHtml(a.title)}';document.getElementById('aonMalId').value='${a.mal_id}'">AON</button>
+                <button class="btn btn-ghost btn-sm" style="font-size:0.68rem;padding:2px 6px" onclick="switchPanel('thumbs',document.querySelector('[data-panel=thumbs]'));onThumbAnimeSelect({mal_id:${a.mal_id},title:'${escHtml(a.title)}',image:'${API.getPoster(a)}',episodes:${a.episodes||0}})">Thumbs</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch {
+    el.innerHTML = '<p style="color:var(--rose);font-size:0.84rem">Error al buscar</p>';
+  }
+}
+
+document.getElementById('toolsSearch')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') toolsSearchAnime();
+});
+
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const ok = Admin.importData(e.target.result);
+    if (ok) {
+      renderThumbsTable();
+      renderAONTable();
+      renderFeatured();
+      renderCustomList();
+      loadDashboard();
+      updateBadges();
+      toast('Backup importado con éxito', 'success');
+    } else {
+      toast('Error al importar el archivo', 'error');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function confirmResetAdmin() {
+  if (!confirm('⚠️ ¿RESETEAR TODOS los datos del admin? (miniaturas, slugs, destacados, config)\nEsta acción NO se puede deshacer.')) return;
+  if (!confirm('Confirma de nuevo: se borrarán TODOS los datos del panel de admin.')) return;
+  Admin.clearAllAdminData();
+  loadDashboard();
+  updateBadges();
+  renderThumbsTable();
+  renderAONTable();
+  renderFeatured();
+  renderCustomList();
+  toast('Datos reseteados', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT: Auto-login si ya hay sesión (hash guardado)
+// ═══════════════════════════════════════════════════════════
+if (Admin.isLoggedIn() && sessionStorage.getItem('ss_admin_session') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display    = 'block';
+  initAdmin();
+}
+
+// Marcar sesión activa al hacer login
+const origDoLogin = doLogin;
+window.doLogin = async function() {
+  await origDoLogin();
+  if (Admin.isLoggedIn()) sessionStorage.setItem('ss_admin_session', '1');
+};
+</script>
+
+</body>
+</html>
